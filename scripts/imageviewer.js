@@ -118,7 +118,7 @@ $(document).ready(function(){
 			}
 			url += '&max=999&auth=http&callback=?';
 			Geodia.tm.clear();
-			console.log(url);
+//			console.log(url);
 			$('ul.site_list').empty();
 			$.getJSON(url,function(json){
 //			console.log(json);
