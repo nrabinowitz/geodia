@@ -1,0 +1,224 @@
+/* Minimal CSS Reset */
+* {
+    vertical-align: baseline;
+    font-weight: inherit;
+    font-family: inherit;
+    font-style: inherit;
+    font-size: 100%;
+    border: 0 none;
+    outline: 0;
+    padding: 0;
+    margin: 0;
+}
+
+/* General font settings */
+* {
+    font-family: "Segoe UI", "Trebuchet MS", "Bitstream Vera Sans", Verdana, sans-serif;
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: Georgia, Constantia, "Lucida Bright", "DejaVu Serif", "Bitstream Vera Serif", serif;
+    letter-spacing: 0.15em;
+}
+a {
+    text-decoration: underline;
+}
+a:link, a:visited {
+    color: #333399;
+}
+a:hover, a:active {
+    color: #0000AA;
+}
+
+/* header styles */
+#hborder {
+    border-bottom: 1px solid #CCCCCC;
+}
+#header {
+    height: 50px;
+    overflow: hidden;
+}
+#header h1 {
+    font-size: 24px;
+    font-style: italic;
+    font-weight: bold;
+	float:left;
+}
+
+/* sidebar styles */
+#sidebar {
+    position: absolute;
+    z-index: 2;
+	overflow:hidden;
+}
+#sbcontent {
+    /*padding: 1em;*/
+/*	padding-left:1em;*/
+	position:absolute;
+	margin-left:20px;
+	overflow:hidden;
+}
+#sbcontent h1{
+	font-weight:bold;
+}
+#sbcontent h2{
+	padding-top:5px;
+	font-size:.8em;
+}
+ul.site_periods{
+	overflow-y:auto;
+	overflow-x:hidden;
+	margin-top:15px;
+}
+ul.site_periods li{
+	position:relative;
+	list-style-type:none;
+	padding-top:10px;
+	padding-bottom:10px;
+	border-bottom:1px solid #c8c8ac; 
+}
+ul.site_periods li p{
+	font-size:.8em;
+	padding-left:5px;
+	padding-bottom:10px;
+}
+ul.site_periods li p span{
+	font-weight:bold;
+}
+ul.site_periods li img{
+	padding-left:2px;
+}
+ul.site_periods li.selected{
+	background-color:#f4f4c0;
+}
+div.image_info p{
+	display:block;
+}
+hr{
+	background-color:black;
+}
+#admin_bar{
+	background-color:gray;
+	height:inherit;
+	position:absolute;
+	z-index:80;
+}
+#admin_bar input[type="text"]{
+	margin-left:5px;
+}
+#admin_bar p{
+	text-align:center;
+	color:white;
+}
+#admincontent{
+	position:absolute;
+}
+#culture_list{
+	width:100%;
+	font-size:.9em;
+}
+#culture_list label{
+	padding-left:15px;
+}
+#culture_list input[type="checkbox"]{
+	float:right;
+}
+#region_list{
+	width:100%;
+	font-size:.9em;
+}
+#region_list label{
+	padding-left:15px;
+}
+#region_list input[type="checkbox"]{
+	float:right;
+}
+ul.site_list{
+	overflow-y:auto;
+	height:250px;
+}
+div.site_admin h1{
+	margin-top:15px;
+}
+ul.site_list li{
+	padding-left:15px;
+}
+ul.site_list li:hover{
+	cursor:pointer;
+	color:#C3463A;
+}
+div.toggler:hover{
+	cursor:pointer;
+}
+div.toggler_left div{
+	font-size: 0px; line-height: 0%; width: 0px;
+	border-top: 10px solid #CCCCCC;
+	border-left: 20px solid gray;
+	border-bottom: 10px solid #CCCCCC;
+	position:absolute;
+		top:50%;
+	margin-top:-20px;
+}
+div.toggler_right{
+	width:20px;
+	height:100%;
+	float:left;
+	background-color:#CCCCCC;
+}
+div.toggler_left{
+	width:20px;
+	height:100%;
+	float:right;
+	background-color:#CCCCCC;
+}
+div.toggler_right div{
+	font-size: 0px; line-height: 0%; width: 0px;
+	border-top: 10px solid #CCCCCC;
+	border-right: 20px solid gray;
+	border-bottom: 10px solid #CCCCCC;
+	position:absolute;
+		top:50%;
+	margin-top:-20px;
+}
+/* timemap styles */
+#timemap {
+    height: 600px;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+#timelinecontainer{
+    width: 100%;
+    height: 35%;
+}
+#timeline{
+    width: 100%;
+    height: 100%;
+    font-size: 12px;
+    background: #CCCCCC;
+}
+#mapcontainer {
+    width: 100%;
+    height: 65%;
+}
+#map {
+    width: 100%;
+    height: 100%;
+    background: #EEEEEE;
+}
+/* event styles */
+.timeline-event-tape {
+    border-left: 1px solid #FFFFFF;
+}
+.timeline-event-label {
+    margin-left: 2px;
+    font-family: "Trebuchet MS", "Bitstream Vera Sans", Verdana, sans-serif;
+    font-size: 11px;
+}
+.infotitle {
+    font-weight:bold;
+}
+.infodescription {
+    width: 200px;
+}
+
+
