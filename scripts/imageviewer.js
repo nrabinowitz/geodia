@@ -153,12 +153,17 @@ $(document).ready(function(){
 function cancelJSONP(){
 	for(var i in TimeMap.loaders.jsonp){
 		if(i.substr(0,1) == '_'){
-			TimeMap.loaders.jsonp[i] = function(){};
+			TimeMap.loaders.jsonp[i] = function(){
+				delete TimeMap.loaders.jsonp[i];
+			};
 		}
 	}
 	for (var i in window){
 		if(i.substr(0,5) == 'jsonp'){
-			window[i] = function(){};
+			window[i] = function(){
+				window[ i ] = undefined;
+				try{ delete window[ i ]; } catch(e){}
+			};
 		}
 	}
 	$('#ajax_loader').remove();
