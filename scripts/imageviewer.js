@@ -1,5 +1,5 @@
 var DASE_COLLECTION = 'http://www.laits.utexas.edu/geodia/modules/geodia';
-
+var JSONP = '';
 	function iniImageViewer(current,periods,site_name,description){
 		if(site_name != $('#site_title').text()){
 			var sb_ul = $('ul.site_periods');
@@ -92,7 +92,6 @@ $(document).ready(function(){
 
 	$('input[type="checkbox"]').attr('checked',false);
 	$('input[type="text"]').val('');
-
 	$('input[type="checkbox"]').click(function(){
 		var val = $(this).val().toLowerCase();
 		var type = $(this).parent('div').attr('id');
@@ -100,8 +99,10 @@ $(document).ready(function(){
 		var cultures = $('#culture_list').children('input[type="checkbox"]:checked');
 		var regions = $('#region_list').children('input[type="checkbox"]:checked');
 		var total = $(cultures).size() + $(regions).size();
+		cancelJSONP();
+
 		if(total > 0){ 
-			var loader = $('<img src="images/ajax-loader.gif"/>').insertAfter($('div.site_admin h1'));
+			var loader = $('<img id="ajax_loader" src="images/ajax-loader.gif"/>').insertAfter($('div.site_admin h1'));
 			if($(cultures).size() > 0){
 				url += ' AND parent_period:(';
 				$(cultures).each(function(i,n){
@@ -118,10 +119,8 @@ $(document).ready(function(){
 			}
 			url += '&max=999&auth=http&callback=?';
 			Geodia.tm.clear();
-//			console.log(url);
 			$('ul.site_list').empty();
 			$.getJSON(url,function(json){
-//			console.log(json);
 				var site_array = [];
 				$('#admin_bar').find('p').remove();
 				$.each(json,function(i,n){
@@ -136,8 +135,6 @@ $(document).ready(function(){
 						}
 					}
 				});
-//				console.log(site_array);
-//				console.log(site_array.length);
 				if(site_array.length > 0){
 					loadDataSet(Geodia.tm,site_array,val,loader);
 				}
@@ -152,6 +149,20 @@ $(document).ready(function(){
 		$('ul.site_list').empty();
 	}
 });
+
+function cancelJSONP(){
+	for(var i in TimeMap.loaders.jsonp){
+		if(i.substr(0,1) == '_'){
+			TimeMap.loaders.jsonp[i] = function(){};
+		}
+	}
+	for (var i in window){
+		if(i.substr(0,5) == 'jsonp'){
+			window[i] = function(){};
+		}
+	}
+	$('#ajax_loader').remove();
+}
 
 	$('#search_button').click(function(){
 		var val = $(this).prev('input').val().toLowerCase();
@@ -205,6 +216,7 @@ $(document).ready(function(){
     	        tm.timeline.getBand(0).setCenterVisibleDate(d);
 	            tm.timeline.layout();
 		});
+
 	}
 
 	//toggle sidebars
