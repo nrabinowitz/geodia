@@ -113,6 +113,9 @@ $(document).ready(function(){
             tm.timeline.layout();
         }
     });
+			GEvent.addListener(Geodia.tm.map,'moveend',function(){
+				reDrawSites(Geodia.tm.map.getBounds(),Geodia.tm.map.getZoom());	
+			});
     // set up resize function
     window.onresize = function() {
         if (timer === null) {
@@ -126,6 +129,43 @@ $(document).ready(function(){
         }
     }
 });
+function reDrawSites(bounds,zoom){
+	var loadedPeriods = false;
+	var changed = false;
+	//set zoom levels
+	var levels = ['15','0','4','8','10'];
+	Geodia.tm.each(function(dset) {
+		if(dset){
+			dset.each(function(item) {
+				//Need to check for periods other wise errors are thrown.(the timeline is refresehd twice when new dataset is loaded.
+				//The first time it is refreshed the periods are not yet loaded
+				//Then check if zoom level is 1.1 should alwasy be shown until Adam gives me list of culturarly important sites. 
+				if(item.periods && item.opts.zoom_level != 1 ){
+					//if it is not in bounds or has a low value zoom level hide it.
+					if(!bounds.contains(item.placemark.getPoint()) || levels[item.opts.zoom_level] >= zoom){
+						item.hide();
+						item.hidePlacemark();
+						changed = true;
+					}
+					//if it comes here then it should be shown, but nosense in making it visible if it was already visible
+					else if(!item.visible){
+						item.show();
+						item.showPlacemark();
+						changed = true;
+					}
+					loadedPeriods = true;
+				}
+    	        if(item.event){
+	    	        item.event._trackNum = null;
+            	}
+			});
+		}
+	});
+	//make sure we are dealing with the dataset that has the periods loaded and make sure if anything has changed.
+	if(loadedPeriods && changed){
+		Geodia.tm.timeline.layout();
+	}
+}
 
 /**
  * Get the current period, by date, for a particular item
@@ -172,7 +212,8 @@ TimeMapItem.openPeriodWindow = function() {
         p = this.getPeriod();
     }
     var html = '<div class="infotitle">' + site_name + '</div>';
-    html += '<div class="infodescription">' + p.term  + ' Period: ' + p.start + ' - ' + p.end + '</div>';
+//    html += '<div class="infodescription">' + p.term  + ' Period: ' + p.start + ' - ' + p.end + '</div>';
+    html += '<div class="infodescription">Level: '+this.opts.zoom_level+'<br/>Culture: '+p.culture+'</div>';
     // scroll timeline if necessary
     var topband = this.dataset.timemap.timeline.getBand(0);
     if (p.getStart().getTime() > topband.getMaxVisibleDate().getTime() || 

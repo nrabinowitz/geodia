@@ -1,5 +1,4 @@
 var DASE_COLLECTION = 'http://www.laits.utexas.edu/geodia/modules/geodia';
-var JSONP = '';
 	function iniImageViewer(current,periods,site_name,description){
 		if(site_name != $('#site_title').text()){
 			var sb_ul = $('ul.site_periods');
@@ -100,7 +99,6 @@ $(document).ready(function(){
 		var regions = $('#region_list').children('input[type="checkbox"]:checked');
 		var total = $(cultures).size() + $(regions).size();
 		cancelJSONP();
-
 		if(total > 0){ 
 			var loader = $('<img id="ajax_loader" src="images/ajax-loader.gif"/>').insertAfter($('div.site_admin h1'));
 			if($(cultures).size() > 0){
@@ -161,7 +159,6 @@ function cancelJSONP(){
 	for (var i in window){
 		if(i.substr(0,5) == 'jsonp'){
 			window[i] = function(){
-				window[ i ] = undefined;
 				try{ delete window[ i ]; } catch(e){}
 			};
 		}
@@ -172,10 +169,9 @@ function cancelJSONP(){
 	$('#search_button').click(function(){
 		var val = $(this).prev('input').val().toLowerCase();
 		var loader = $('<img src="images/ajax-loader.gif"/>').insertAfter($('div.site_admin h1'));
-		var url = DASE_COLLECTION+'/search.json?c=geodia&q='+val+'* NOT item_type:image&max=999&callback=?'
-		var x = $.getJSON(url,function(json){
+		var url = DASE_COLLECTION+'/search.json?c=geodia&q='+val+'* NOT item_type:(image OR period)&max=999&callback=?'
+		$.getJSON(url,function(json){
 			var site_array = [];
-			$('#admincontent').find('p').remove();
 			$.each(json,function(i,n){
 				if(n.metadata.site_region ){
 					if(n.metadata.parent_period[1].text.toLowerCase().search(val) != -1 || n.metadata.site_region[0].text.toLowerCase().search(val) != -1){
@@ -216,12 +212,11 @@ function cancelJSONP(){
 				    });
 				}
 			});
-				$(gif).remove();
-        	    var d = tm.eventSource.getEarliestDate();
-    	        tm.timeline.getBand(0).setCenterVisibleDate(d);
-	            tm.timeline.layout();
+			$(gif).remove();
+       	    var d = tm.eventSource.getEarliestDate();
+   	        tm.timeline.getBand(0).setCenterVisibleDate(d);
+            tm.timeline.layout();
 		});
-
 	}
 
 	//toggle sidebars
