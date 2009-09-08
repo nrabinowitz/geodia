@@ -148,24 +148,6 @@ $(document).ready(function(){
 	}
 });
 
-function cancelJSONP(){
-	for(var i in TimeMap.loaders.jsonp){
-		if(i.substr(0,1) == '_'){
-			TimeMap.loaders.jsonp[i] = function(){
-				delete TimeMap.loaders.jsonp[i];
-			};
-		}
-	}
-	for (var i in window){
-		if(i.substr(0,5) == 'jsonp'){
-			window[i] = function(){
-				try{ delete window[ i ]; } catch(e){}
-			};
-		}
-	}
-	$('#ajax_loader').remove();
-}
-
 	$('#search_button').click(function(){
 		var val = $(this).prev('input').val().toLowerCase();
 		var loader = $('<img src="images/ajax-loader.gif"/>').insertAfter($('div.site_admin h1'));
@@ -203,21 +185,51 @@ function cancelJSONP(){
 		var loader = new TimeMap.loaders.jsonp({url:DASE_COLLECTION+'/dataset?site_sernums='+escape(site_array.toString())+'&auth=http&callback='});
 		loader.load(ds,function(){
 			Geodia.loadPeriods(ds);
-			Geodia.tm.each(function(dset) {
-				if(dset){
-					dset.each(function(item) {
-						if(item.event){
-					        item.event._trackNum = null;
-						}
-				    });
-				}
-			});
+            tm.addFilterChain("culture",
+                // true condition: change marker icon
+                function(item) {
+                    var p = item.getPeriod();
+                    if (p) {
+                        item.setPlacemarkTheme(p.theme);
+                    }
+                },
+                // false condition: do nothing
+                function(item) { }
+            );
+            // filter: change icon if visible
+            tm.addFilter("culture", function(item) {
+                return item.placemarkVisible;
+            });
+            // add listener for filter chain
+            tm.timeline.getBand(0).addOnScrollListener(function() {
+                tm.filter("culture");
+            });
+
+			tm.addFilter("timeline",TimeMap.filters.visibleOnMap);
 			$(gif).remove();
        	    var d = tm.eventSource.getEarliestDate();
    	        tm.timeline.getBand(0).setCenterVisibleDate(d);
             tm.timeline.layout();
 		});
 	}
+
+function cancelJSONP(){
+	for(var i in TimeMap.loaders.jsonp){
+		if(i.substr(0,1) == '_'){
+			TimeMap.loaders.jsonp[i] = function(){
+				delete TimeMap.loaders.jsonp[i];
+			};
+		}
+	}
+	for (var i in window){
+		if(i.substr(0,5) == 'jsonp'){
+			window[i] = function(){
+				try{ delete window[ i ]; } catch(e){}
+			};
+		}
+	}
+	$('#ajax_loader').remove();
+}
 
 	//toggle sidebars
 	$('div.toggler').click(function(){
