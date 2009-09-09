@@ -1,164 +1,137 @@
-/*
- * Initialization.
- */
-
-// put site-specific stuff into one object for namespace protection
-Geodia = { 
-    sbopen: false,
-    adminopen: false,
-    sbside: 'r',
-    adminside: 'l',
-    tm: null
-};
-
-var timer=null;
-$(document).ready(function(){
-    // set up panels
-    Geodia.resizePanels();
-    // set up hotzones
-    var zones1 = [
-        {   
-            start:    "-1000",
-            end:      "1000",
-            magnify:  8,
-            unit:     Timeline.DateTime.DECADE
-        }
-    ];
-    var zones2 = [
-        {   
-            start:    "-1000",
-            end:      "1000",
-            magnify:  8,
-            unit:     Timeline.DateTime.CENTURY
-        }
-    ];
-    // set up themes
-    var theme1 = Timeline.ClassicTheme.create();
-    theme1.event.track.height = 18;
-    theme1.event.track.gap =    3;
-    theme1.event.tape.height =  14;
-    var theme2 = Timeline.ClassicTheme.create();
-    theme2.event.track.height = 2;
-    theme2.event.track.gap =    2;
-    theme2.event.tape.height =  2;
-    Geodia.tm = TimeMap.init({
-        mapId: "map",
-        timelineId: "timeline",
-        options: {
-            openInfoWindow: TimeMapItem.openPeriodWindow,
-            mapType: G_SATELLITE_MAP
-        },
-        datasets: [
-            {
-                id: "sites",
-                title: "Sites",
-                type: 'json_string',
-                options: { 
-					url: 'scripts/rome.json',
-                    theme: 'red',
-                    classicTape: true
-                }
-            }
-        ],
-        bands: [
-    		Timeline.createHotZoneBandInfo({
-                eventSource:    false,
-                width:          "80%", 
-                intervalUnit:   Timeline.DateTime.CENTURY, 
-                intervalPixels: 70,
-                theme:          theme1,
-                zones:          zones1,
-                eventPainter:   Geodia.PeriodEventPainter
-            }),
-            Timeline.createHotZoneBandInfo({
-                eventSource:    false,
-                width:          "20%", 
-                intervalUnit:   Timeline.DateTime.MILLENNIUM,
-                intervalPixels: 100,
-                showEventText:  false,
-                theme:          theme2,
-                zones:          zones2,
-                eventPainter:   Geodia.PeriodEventPainter
-            })
-        ],
-        // set up timemap
-        dataLoadedFunction: function(tm) {
-            // set up periods as an EventIndex
-            tm.each(function(ds) {
-				Geodia.loadPeriods(ds);
-            });
-            // add culture filter chain
-            tm.addFilterChain("culture",
-                // true condition: change marker icon
-                function(item) {
-                    var p = item.getPeriod();
-                    if (p) {
-                        item.setPlacemarkTheme(p.theme);
-                    }
-                },
-                // false condition: do nothing
-                function(item) { }
-            );
-            // filter: change icon if visible
-            tm.addFilter("culture", function(item) {
-                return item.placemarkVisible;
-            });
-            // add listener for filter chain
-            tm.timeline.getBand(0).addOnScrollListener(function() {
-                tm.filter("culture");
-            });
-			tm.addFilter("timeline",TimeMap.filters.visibleOnMap);
-            // init timeline
-
-            var d = tm.eventSource.getEarliestDate();
-            tm.timeline.getBand(0).setCenterVisibleDate(d);
-            tm.timeline.layout();
-        }
-    });
-
-	GEvent.addListener(Geodia.tm.map,'moveend',function(){
-		Geodia.tm.filter("timeline");
-		var loadedPeriods = false;
-		Geodia.tm.each(function(dset) {
-			dset.each(function(item) {
-				if(item.periods && !loadedPeriods){
-					loadedPeriods = true;
-				}
-		        item.event._trackNum = null;
-			});
-		});
-		if(loadedPeriods){
-			Geodia.tm.timeline.layout();
-		}
-	});
-
-    // set up resize function
-    window.onresize = function() {
-        if (timer === null) {
-            timer = window.setTimeout(function() {
-                timer = null;
-                // call twice to deal w/scrollbar
-                Geodia.resizePanels();
-                Geodia.resizePanels();
-                Geodia.tm.timeline.layout();
-            }, 200);
-        }
-    }
-});
+/*----------------------------------------------------------------------------
+ * Core class definitions
+ *---------------------------------------------------------------------------*/
 
 /**
- * Get the current period, by date, for a particular item
+ * @class   
+ * Wrapper class containing all data and functions specific to the Geodia site.
  *
- * @param {Date} d      Current date
- * @return              Period covering that date
+ * @param {Object} options      Container for optional params (probably to load state)
  */
-TimeMapItem.prototype.getPeriod = function(d) {
-    if (!this.periods) return null;
-    // get center date if none given
-    if (!d) d = this.dataset.timemap.timeline.getBand(0).getCenterVisibleDate();
-    var iterator = this.periods.getIterator(d, new Date());
-    return iterator.next();
+function Geodia(options) {
+    /** The associated TimeMap object */
+    this.tm = null;
+    
+    // set defaults
+    var defaults = {
+        mapId: "map",
+        timelineId: "timeline",
+        mapType: "satellite"
+    };
+    
+    /** 
+     * Container for optional settings passed in the "options" parameter
+     * @type Object
+     */
+    this.opts = TimeMap.util.merge(options, defaults);
+}
+
+
+/**
+ * Initialize the object, including the timemap
+ */
+Geodia.prototype.init = function() {
+    var options = this.opts;
+    
+    // set up the dataset options
+    var ds = {
+        id: "sites",
+        title: "Sites",
+        options: {
+            theme: 'red',
+            classicTape: true
+        }
+    };
+    // look for supplied data parameters
+    if (options.dataUrl) {
+        ds.type = "json_string";
+        ds.options.url = options.dataUrl
+    }
+    else {
+        ds.type = "basic";
+        ds.options.items = [];
+    }
+    
+    // initialize timemap
+    // XXX: Setting Geodia.tm is a temporary measure; 
+    // w/multiple objects, you'd need an array
+    Geodia.tm = this.tm = TimeMap.init({
+        mapId: options.mapId,
+        timelineId: options.timelineId,
+        options: {
+            openInfoWindow: TimeMapItem.openPeriodWindow,
+            mapType: options.mapType
+        },
+        scrollTo: options.scrollTo,
+        datasets: [ ds ],
+        bands: Geodia.bands,
+        dataLoadedFunction: Geodia.initData
+    });
+    
 };
+
+/**
+ * Static function: initialize timemap data once loaded
+ *
+ * @param {TimeMap} tm      TimeMap for which to initialize data
+ */
+Geodia.initData = function(tm) {
+    // set up periods as an EventIndex
+    tm.eachItem(function(item) {
+        item.loadPeriods();
+        Geodia.Interface.addToSiteList(item);
+    });
+    
+    // add culture filter chain
+    tm.addFilterChain("culture",
+        // true condition: change marker icon
+        function(item) {
+            var p = item.getPeriod();
+            if (p) {
+                item.setPlacemarkTheme(p.theme);
+            }
+        },
+        // false condition: do nothing
+        function(item) { }
+    );
+    // filter: change icon if visible
+    tm.addFilter("culture", function(item) {
+        return item.placemarkVisible;
+    });
+    // add listener for filter chain
+    tm.timeline.getBand(0).addOnScrollListener(function() {
+        tm.filter("culture");
+    });
+    
+    // filter timeline events according to map
+    tm.addFilter("timeline", TimeMap.filters.visibleOnMap);
+    // add listener to filter timeline
+	GEvent.addListener(tm.map, 'moveend', function(){
+		tm.filter("timeline");
+		var loadedPeriods = false;
+		tm.eachItem(function(item) {
+            if (item.periods && !loadedPeriods){
+                loadedPeriods = true;
+            }
+            item.event._trackNum = null;
+		});
+		if (loadedPeriods){
+			tm.timeline.layout();
+		}
+	});
+};
+
+$(document).ready(function(){
+    
+    // initialize interface
+    Geodia.Interface.init();
+    
+    // initialize Geodia
+    var gda = new Geodia();
+    gda.init();
+    
+});
+
 
 /**
  * Set the placemark to a specific theme
@@ -175,12 +148,37 @@ TimeMapItem.prototype.setPlacemarkTheme = function(theme) {
         }
     }
 };
+
+/**
+ * Filter: Determine whether the current item is visible on the map
+ *
+ * @param {TimeMapItem} item    Item to test
+ */
 TimeMap.filters.visibleOnMap = function(item){
 	var bounds = item.map.getBounds();
 	return bounds.containsLatLng(item.getInfoPoint());
 };
+ 
+/*----------------------------------------------------------------------------
+ * Periodization
+ *---------------------------------------------------------------------------*/
+
 /**
- * Test: Show description based on period
+ * Get the current period, by date, for a particular item
+ *
+ * @param {Date} d      Current date
+ * @return              Period covering that date
+ */
+TimeMapItem.prototype.getPeriod = function(d) {
+    if (!this.periods) return null;
+    // get center date if none given
+    if (!d) d = this.dataset.timemap.timeline.getBand(0).getCenterVisibleDate();
+    var iterator = this.periods.getIterator(d, new Date());
+    return iterator.next();
+};
+
+/**
+ * Show description based on period
  */
 TimeMapItem.openPeriodWindow = function() {
     var p;
@@ -210,136 +208,54 @@ TimeMapItem.openPeriodWindow = function() {
     }
     // custom functions will need to set this as well
     this.selected = true;
-	iniImageViewer(p,this.periods,site_name,this.opts.description);
+	Geodia.Interface.initImageViewer(p,this.periods,site_name,this.opts.description);
 };
 
-/**
- * Resize the panels to fit the full window
- */
-Geodia.resizePanels = function() {
-    // get full screen size
-    var dh = $(window).height();
-    var dw = $(window).width();
-    var sbw = Geodia.sbopen ? 350 : 20;
-    var adw = Geodia.adminopen ? 350 : 20;
-    var hh = 0;//51;
-    // size timemap and sidebar
-	var sbh = dh - hh;
-    $('#timemap').height(dh - hh)
-        .width(dw - sbw - adw);
-	$('ul.site_periods').height(sbh * .9);
-    $('#sidebar').height(dh - hh)
-        .width(sbw);
-    $('#admin_bar').height(dh - hh)
-        .width(adw);
-    // choose sidebar side
-    var border = '0px solid #CCCCCC';
-    if (Geodia.sbside == 'l') {
-        // left side
-        $('#sidebar')
-            .css('border-right', border);
-        $('#timemap')
-            .css('margin-right', sbw)
-            .css('left', sbw);
-    }
-   	else {
-        // right side
-        $('#admin_bar')
-            .css('border-right', border)
-            .css('left', 0);
-        $('#timemap')
-            .css('left', adw);
-        $('#sidebar')
-            .css('border-left', border)
-            .css('left', dw - sbw);
-    }
-
-    if (Geodia.tm && Geodia.tm.map) {
-        Geodia.tm.map.checkResize();
-    }
-}
-
-/*
- * Geodia themes - TimeMapDataSetThemes plus stripes
- */
-Geodia.themes = {};
-(function() {
-    // this is a little hack-ish, but fast
-    var tmThemes = TimeMap.themes;
-    for (var color in tmThemes) {
-        var theme = new tmThemes[color]();
-        theme.stripe = 'images/' + color + '_stripe.png';
-        Geodia.themes[color] = theme;
-    }
-    // add a new one for default
-    Geodia.themes.grey =  new TimeMapTheme({
-        iconImage: 'images/grey-dot.png',
-        color: '#5F5F5F'
-    });
-    Geodia.themes.grey.stripe = 'images/grey_stripe.png';
-    Geodia.themes.grey.stripe2 = 'images/tan_stripe.png';
-})();
-
-/*
- * Color map for cultures
- */
-Geodia.cultureMap = {
-    "default": 'grey',
-    "Greek": 'green',
-    "Roman": 'red',
-    "Sumerian": 'orange',
-    "Punic": 'purple',
-    "Levantine": 'blue',
-    "Latial": 'ltblue'
-};
-
-Geodia.loadPeriods = function(ds){
-            var parser = TimeMapDataset.hybridParser;
-			var site_list = $('ul.site_list');
-                ds.each(function(item) {
-					//add site to site_list
-					var site = $('<li>'+item.event._text+'</li>').appendTo(site_list);
-					$(site).data('site',item);
-					$(site).data('name',item.event._text);
-					$(site).data('dataset',ds);
-                    item.periods = new SimileAjax.EventIndex(null);
-                    var periods = item.opts.periods;
-                    // loop through periods
-                    for (var x=0; x<periods.length; x++) {
-                        (function(x) {
-                            // add getStart and getEnd functions
-                            periods[x].getStart = function() {
-                                return parser(periods[x].start);
-                            };
-                            periods[x].getEnd = function() {
-                                return parser(periods[x].end);
-                            };
-                            periods[x].getImages = function() {
-								if(periods[x].options){
-									if(periods[x].options.images){
-										return periods[x].options.images;
-									}
-									else{
-										return false;
-									}
-								}
-								else{
-									return false;
-								}
-                            };
-                            periods[x].getID = function() {
-                                return x;
-                            };
-                            // add theme and stripe
-                            var style = Geodia.getPeriodStyle(periods[x]);
-                            periods[x].theme = style.theme;
-                            periods[x].stripe = style.stripe;
-                        })(x);
-                        item.periods.add(periods[x]);
+TimeMapItem.prototype.loadPeriods = function(){    
+    // check if already loaded
+    if (this.periods) return;
+    
+    var parser = TimeMapDataset.hybridParser;
+        periods = this.opts.periods;
+    
+    // set up event index
+    this.periods = new SimileAjax.EventIndex(null);
+    
+    // loop through periods
+    for (var x=0; x<periods.length; x++) {
+        (function(x) {
+            // add getStart and getEnd functions
+            periods[x].getStart = function() {
+                return parser(periods[x].start);
+            };
+            periods[x].getEnd = function() {
+                return parser(periods[x].end);
+            };
+            periods[x].getImages = function() {
+                if(periods[x].options){
+                    if(periods[x].options.images){
+                        return periods[x].options.images;
                     }
-                });
-
+                    else{
+                        return false;
+                    }
+                }
+                else{
+                    return false;
+                }
+            };
+            periods[x].getID = function() {
+                return x;
+            };
+            // add theme and stripe
+            var style = Geodia.getPeriodStyle(periods[x]);
+            periods[x].theme = style.theme;
+            periods[x].stripe = style.stripe;
+        })(x);
+        this.periods.add(periods[x]);
+    }
 };
+
 /**
  * Get theme and stripe from period
  * @return {Object}     Style w/theme + stripe
@@ -545,3 +461,104 @@ Geodia.PeriodEventPainter = function(params) {
     // return new painter
     return painter;
 }
+
+/*----------------------------------------------------------------------------
+ * Static settings
+ *---------------------------------------------------------------------------*/
+
+/**
+ * Geodia themes - TimeMapDataSetThemes plus stripes
+ */
+Geodia.themes = {};
+(function() {
+    // this is a little hack-ish, but fast
+    var tmThemes = TimeMap.themes, 
+        gThemes = Geodia.themes;
+    for (var color in tmThemes) {
+        var theme = tmThemes[color];
+        theme.stripe = 'images/' + color + '_stripe.png';
+        gThemes[color] = theme;
+    }
+    // add a new one for default
+    gThemes.grey =  new TimeMapTheme({
+        iconImage: 'images/grey-dot.png',
+        color: '#5F5F5F'
+    });
+    gThemes.grey.stripe = 'images/grey_stripe.png';
+    gThemes.grey.stripe2 = 'images/tan_stripe.png';
+})();
+
+/**
+ * Static Geodia band info
+ */
+Geodia.bands = [];
+(function() {
+    // add settings for themes
+    var themes = [ 
+        Timeline.ClassicTheme.create(), 
+        Timeline.ClassicTheme.create()
+    ];
+    themes[0].event.track.height = 18;
+    themes[0].event.track.gap =    3;
+    themes[0].event.tape.height =  14;
+    themes[1].event.track.height = 2;
+    themes[1].event.track.gap =    2;
+    themes[1].event.tape.height =  2;
+    
+    // add settings for hotzones
+    var zones = [
+        // show decades between 1000 BC and 1000 AD in top band
+        [
+            {   
+                start:    "-1000",
+                end:      "1000",
+                magnify:  8,
+                unit:     Timeline.DateTime.DECADE
+            }
+        ], 
+        // show centuries between 1000 BC and 1000 AD in bottom band
+        [
+            {   
+                start:    "-1000",
+                end:      "1000",
+                magnify:  8,
+                unit:     Timeline.DateTime.CENTURY
+            }
+        ]
+    ];
+    
+    Geodia.bands = [
+        Timeline.createHotZoneBandInfo({
+            eventSource:    false,
+            width:          "80%", 
+            intervalUnit:   Timeline.DateTime.CENTURY, 
+            intervalPixels: 70,
+            theme:          themes[0],
+            zones:          zones[0],
+            eventPainter:   Geodia.PeriodEventPainter
+        }),
+        Timeline.createHotZoneBandInfo({
+            eventSource:    false,
+            width:          "20%", 
+            intervalUnit:   Timeline.DateTime.MILLENNIUM,
+            intervalPixels: 100,
+            showEventText:  false,
+            theme:          themes[1],
+            zones:          zones[1],
+            eventPainter:   Geodia.PeriodEventPainter
+        })
+    ];
+})();
+
+/**
+ * Color map for cultures
+ */
+Geodia.cultureMap = {
+    "default": 'grey',
+    "Greek": 'green',
+    "Roman": 'red',
+    "Sumerian": 'orange',
+    "Punic": 'purple',
+    "Levantine": 'blue',
+    "Latial": 'ltblue'
+};
