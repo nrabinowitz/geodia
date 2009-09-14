@@ -224,17 +224,18 @@ TimeMapItem.prototype.loadPeriods = function(){
     // loop through periods
     for (var x=0; x<periods.length; x++) {
         (function(x) {
+            var p = periods[x];
             // add getStart and getEnd functions
-            periods[x].getStart = function() {
-                return parser(periods[x].start);
+            p.getStart = function() {
+                return parser(p.start);
             };
-            periods[x].getEnd = function() {
-                return parser(periods[x].end);
+            p.getEnd = function() {
+                return parser(p.end);
             };
-            periods[x].getImages = function() {
-                if(periods[x].options){
-                    if(periods[x].options.images){
-                        return periods[x].options.images;
+            p.getImages = function() {
+                if(p.options){
+                    if(p.options.images){
+                        return p.options.images;
                     }
                     else{
                         return false;
@@ -244,13 +245,13 @@ TimeMapItem.prototype.loadPeriods = function(){
                     return false;
                 }
             };
-            periods[x].getID = function() {
+            p.getID = function() {
                 return x;
             };
             // add theme and stripe
-            var style = Geodia.getPeriodStyle(periods[x]);
-            periods[x].theme = style.theme;
-            periods[x].stripe = style.stripe;
+            var style = Geodia.getPeriodStyle(p);
+            p.theme = style.theme;
+            p.stripe = style.stripe;
         })(x);
         this.periods.add(periods[x]);
     }

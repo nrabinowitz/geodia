@@ -101,7 +101,6 @@ Geodia.Interface.addToSiteList = function(item) {
 /*----------------------------------------------------------------------------
  * Admin Panel
  *---------------------------------------------------------------------------*/
-	
 
 $(document).ready(function(){
 
@@ -129,16 +128,16 @@ $(document).ready(function(){
 		var regions = $('#region_list').children('input[type="checkbox"]:checked');
 		var total = $(cultures).size() + $(regions).size();
 		cancelJSONP();
-		if(total > 0){ 
+		if (total > 0) { 
 			var loader = $('<img id="ajax_loader" src="images/ajax-loader.gif"/>').insertAfter($('div.site_admin h1'));
-			if($(cultures).size() > 0){
+			if ($(cultures).size() > 0){
 				url += ' AND parent_period:(';
 				$(cultures).each(function(i,n){
 					url += 	$(n).val().replace('/','* OR ')+'* OR ';			
 				});
 				url = url.substring(0,url.length - 4)+')';
 			}
-			if($(regions).size() > 0){
+			if ($(regions).size() > 0){
 				url += ' AND site_region:(';
 				$(regions).each(function(i,n){
 					url += $(n).val()+' OR ';
@@ -152,18 +151,18 @@ $(document).ready(function(){
 				var site_array = [];
 				$('#admin_bar').find('p').remove();
 				$.each(json,function(i,n){
-					if(n.itemtype.term == 'site'){
-						if(!exists(site_array,UrlToSerial(n.editlink))){
+					if (n.itemtype.term == 'site'){
+						if (!exists(site_array,UrlToSerial(n.editlink))){
 							site_array.push(UrlToSerial(n.editlink));
 						}
 					}
-					else if(n.metadata.site_region){
-						if(!exists(site_array,UrlToSerial(n.metadata.site_region[0].url))){
+					else if (n.metadata.site_region){
+						if (!exists(site_array,UrlToSerial(n.metadata.site_region[0].url))){
 							site_array.push(UrlToSerial(n.metadata.site_region[0].url));
 						}
 					}
 				});
-				if(site_array.length > 0){
+				if (site_array.length > 0){
 					loadDataSet(Geodia.tm,site_array,val,loader);
 				}
 				else{
@@ -173,32 +172,32 @@ $(document).ready(function(){
 			});
 		}
 		else{
-		Geodia.tm.clear();
-		$('ul.site_list').empty();
-	}
-});
+            Geodia.tm.clear();
+            $('ul.site_list').empty();
+        }
+    });
 
 	$('#search_button').click(function(){
 		var val = $(this).prev('input').val().toLowerCase();
 		var loader = $('<img src="images/ajax-loader.gif"/>').insertAfter($('div.site_admin h1'));
-		var url = Geodia.Collection.SERVICE+'/search.json?c=geodia&q='+val+'* NOT item_type:(image OR period)&max=999&callback=?'
+		var url = Geodia.Collection.SERVICE+'/search.json?c=geodia&q='+val+'* NOT item_type:(image OR period)&max=999&callback=?';
 		$.getJSON(url,function(json){
 			var site_array = [];
 			$.each(json,function(i,n){
-				if(n.metadata.site_region ){
-					if(n.metadata.parent_period[1].text.toLowerCase().search(val) != -1 || n.metadata.site_region[0].text.toLowerCase().search(val) != -1){
-						if(!exists(site_array,UrlToSerial(n.metadata.site_region[0].url))){
+				if (n.metadata.site_region ){
+					if (n.metadata.parent_period[1].text.toLowerCase().search(val) != -1 || n.metadata.site_region[0].text.toLowerCase().search(val) != -1){
+						if (!exists(site_array,UrlToSerial(n.metadata.site_region[0].url))){
 							site_array.push(UrlToSerial(n.metadata.site_region[0].url));
 						}
 					}
 				}
-				else if(n.metadata.site_name){
-					if(!exists(site_array,UrlToSerial(n.editlink)) ){
+				else if (n.metadata.site_name){
+					if (!exists(site_array,UrlToSerial(n.editlink)) ){
 						site_array.push(UrlToSerial(n.editlink));
 					}
 				}
 			});
-				if(site_array.length > 0){
+				if (site_array.length > 0){
 					loadDataSet(Geodia.tm,site_array,val,loader);
 				}
 				else{
@@ -223,14 +222,14 @@ $(document).ready(function(){
 
 function cancelJSONP(){
 	for(var i in TimeMap.loaders.jsonp){
-		if(i.substr(0,1) == '_'){
+		if (i.substr(0,1) == '_'){
 			TimeMap.loaders.jsonp[i] = function(){
 				delete TimeMap.loaders.jsonp[i];
 			};
 		}
 	}
 	for (var i in window){
-		if(i.substr(0,5) == 'jsonp'){
+		if (i.substr(0,5) == 'jsonp'){
 			window[i] = function(){
 				try{ delete window[ i ]; } catch(e){}
 			};
@@ -242,16 +241,16 @@ function cancelJSONP(){
 	//toggle sidebars
 	$('div.toggler').click(function(){
 			var id = $(this).parent('div').attr('id');
-			if(id == 'sidebar'){
-				if($(this).parent('div').width() > 20){
+			if (id == 'sidebar'){
+				if ($(this).parent('div').width() > 20){
 					Geodia.Interface.sbopen = false;
 				}
 				else{
 					Geodia.Interface.sbopen = true;
 				}
 			}
-			if(id == 'admin_bar'){
-				if($(this).parent('div').width() > 20){
+			if (id == 'admin_bar'){
+				if ($(this).parent('div').width() > 20){
 					Geodia.Interface.adminopen = false;
 				}
 				else{
@@ -265,7 +264,7 @@ function cancelJSONP(){
 	
 	function exists(ar,o) {
 		for(var i = 0; i < ar.length; i++)
-			   if(ar[i] === o)
+			   if (ar[i] === o)
 				        return true;
 		return false;
 	}
@@ -276,7 +275,7 @@ function cancelJSONP(){
 		var item = $(this).data('site');
 		var dataset = $(this).data('dataset');
 		var name = $(this).data('name');
-		if(name == $('#site_title').text()){
+		if (name == $('#site_title').text()){
 			$('#site_title').empty();
 			$('#site_description').empty();
 			$('ul.site_periods').empty();
@@ -285,9 +284,9 @@ function cancelJSONP(){
 		item.hidePlacemark();
 //		console.log(item);
 //		item.clear();
-		if(dataset.items.length == 1){
+		if (dataset.items.length == 1){
 			dataset.clear();
-			if(name == $('#site_title').text()){
+			if (name == $('#site_title').text()){
 				$('#site_title').empty();
 				$('#site_description').empty();
 				$('ul.site_periods').empty();
@@ -297,7 +296,7 @@ function cancelJSONP(){
 		$(this).remove();
 		delete item;
 					dataset.each(function(i) {
-						if(i.event){
+						if (i.event){
 					        i.event._trackNum = null;
 						}
 				    });
@@ -342,29 +341,29 @@ Geodia.Interface.initImageViewer = function(current, periods, site_name, descrip
             }
             if (images) {
                 for(var i in images){
-                    if(images[i]['large'] != null){
+                    if (images[i]['large'] != null){
                         li += '<a href="'+images[i]['large']+'"><img src="'+images[i]['thumb']+'"/>';
                     }
-                    else if(images[i]['medium'] != null){
+                    else if (images[i]['medium'] != null){
                         li += '<a href="'+images[i]['medium']+'"><img src="'+images[i]['thumb']+'"/>';
                     }
                     else{
                         li += '<a href="'+images[i]['small']+'"><img src="'+images[i]['thumb']+'"/>';
                     }
                     li += '<div style="display:none" class="image_info">';
-                    if(images[i].metadata['title']){
+                    if (images[i].metadata['title']){
                         li += '<p class="image_title"><span>Description: </span>'+images[i].metadata['title']+'</p>';
                     }
-                    if(images[i].metadata['image_date']){
+                    if (images[i].metadata['image_date']){
                         li += '<p class="image_date"><span>Date: </span>'+images[i].metadata['image_date']+'</p>';
                     }
-                    if(images[i].metadata['source']){
+                    if (images[i].metadata['source']){
                         li += '<p class="image_source"><span>Source: </span>'+images[i].metadata['source']+'</p>';
                     }
-                    if(images[i].metadata['created_in']){
+                    if (images[i].metadata['created_in']){
                         li += '<p class="image_created"><span>Created In: </span>'+images[i].metadata['created_in']+'</p>';
                     }
-                    if(images[i].metadata['found_in']){
+                    if (images[i].metadata['found_in']){
                         li += '<p class="image_found"><span>Found In: </span>'+images[i].metadata['found_in']+'</p>';
                     }
                     li += '</div></a>';
@@ -374,7 +373,7 @@ Geodia.Interface.initImageViewer = function(current, periods, site_name, descrip
             var appended = $(li).appendTo(sb_ul);
             $(appended).children('a').lightBox();
 
-            if($(appended).hasClass('selected')){
+            if ($(appended).hasClass('selected')){
                 $('ul.site_periods').animate({scrollTop:li_sum_heights},'slow');
             }
             li_sum_heights += $(appended).height() + 20; 
@@ -383,7 +382,7 @@ Geodia.Interface.initImageViewer = function(current, periods, site_name, descrip
     else{
         var li_sum_heights = 0;
         $('ul.site_periods li').each(function(i,n){
-            if($(n).hasClass(formatName(current.term)+'_'+formatName(current.culture))){
+            if ($(n).hasClass(formatName(current.term)+'_'+formatName(current.culture))){
                 $('ul.site_periods').animate({scrollTop:li_sum_heights},'slow');
                 $(n).addClass('selected');
             }
