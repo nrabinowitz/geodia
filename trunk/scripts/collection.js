@@ -6,31 +6,8 @@
  * @namespace
  * Namespace to hold functions dealing with collection querying and data loading
  */
-Geodia.loaders = {};
-
-/**
- * @class
- * Abstract loader class. Will we ever have more than one loader?
- * Maybe not, but why not plan for it?
- */
-Geodia.loaders.basic = function() {
-    
-    this.SERVICE = "";
-    
-    // placeholder methods, to be defined in subclasses
-    
-    
-    this.getQuery = function(cultures, regions, callback) {
-        // redefine in subclass
-        callback();
-    };
-    
-    
-    this.getSearch = function(term, callback) {
-        // redefine in subclass
-        callback();
-    };
-    
+Geodia.Collection = {
+    SERVICE: "http://www.laits.utexas.edu/geodia/modules/geodia"
 };
 
 /**
