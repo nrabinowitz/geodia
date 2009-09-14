@@ -15,15 +15,9 @@ Geodia.Collection = {
  * DASe Collection loader class
  *
  * @augments TimeMap.loaders.jsonp
- * @requires loaders/json.js
- *
- * @param {Object} options          All options for the loader:<pre>
- *   {String} url                       Full JSONP url of Flickr feed to load
- *   {Function} preloadFunction         Function to call on data before loading
- *   {Function} transformFunction       Function to call on individual items before loading
  */
 TimeMap.loaders.dase = function() {
-    var loader = new TimeMap.loaders.jsonp(options);
+    var loader = new TimeMap.loaders.jsonp({});
     
     /** 
      * Base URL of the service 

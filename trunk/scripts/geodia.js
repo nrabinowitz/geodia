@@ -3,72 +3,96 @@
  *---------------------------------------------------------------------------*/
 
 /**
- * @class   
- * Wrapper class containing all data and functions specific to the Geodia site.
- *
- * @param {Object} options      Container for optional params (probably to load state)
+ * @namespace   Namespace for all Geodia-specific functionality
  */
-function Geodia(options) {
-    /** The associated TimeMap object */
-    this.tm = null;
-    
-    // set defaults
-    var defaults = {
-        mapId: "map",
-        timelineId: "timeline",
-        mapType: "satellite"
-    };
-    
-    /** 
-     * Container for optional settings passed in the "options" parameter
-     * @type Object
-     */
-    this.opts = TimeMap.util.merge(options, defaults);
-}
-
+Geodia = {};
 
 /**
- * Initialize the object, including the timemap
+ * @class   
+ * Singleton Controller class containing data and functions specific to the Geodia site.
  */
-Geodia.prototype.init = function() {
-    var options = this.opts;
+Geodia.controller = new function() {
     
-    // set up the dataset options
-    var ds = {
-        id: "sites",
-        title: "Sites",
-        options: {
-            theme: 'red',
-            classicTape: true
+    /**
+     * Initialize the controller, including the timemap and interface
+     *
+     * @param {Object} options      Container for optional params (probably to load state)
+     */
+    this.init = function(options) {
+        
+        // set defaults
+        var defaults = {
+            mapId: "map",
+            timelineId: "timeline",
+            mapType: "satellite"
+        };
+        
+        /** 
+         * Container for optional settings passed in the "options" parameter
+         * @type Object
+         */
+        this.opts = options = TimeMap.util.merge(options, defaults);
+        
+        // initialize interface
+        
+        /** The associated interface **/
+        this.ui = Geodia.Interface;
+        this.ui.init();
+        
+        // initialize loader
+        
+        /** The associated loader **/
+        this.loader = new TimeMap.loaders.dase();
+        
+        // initialize timemap
+        
+        // set up the dataset options
+        var ds = {
+            id: "sites",
+            title: "Sites",
+            options: {
+                theme: 'red',
+                classicTape: true
+            }
+        };
+        // look for supplied data parameters
+        if (options.dataUrl) {
+            ds.type = "json_string";
+            ds.options.url = options.dataUrl
         }
+        else {
+            ds.type = "basic";
+            ds.options.items = [];
+        }
+        
+        // XXX: Setting Geodia.tm is a temporary measure; 
+        // w/multiple objects, you'd need an array
+        
+        /** The associated TimeMap object */
+        this.tm = TimeMap.init({
+            mapId: options.mapId,
+            timelineId: options.timelineId,
+            options: {
+                openInfoWindow: TimeMapItem.openPeriodWindow,
+                mapType: options.mapType
+            },
+            scrollTo: options.scrollTo,
+            datasets: [ ds ],
+            bands: Geodia.bands,
+            dataLoadedFunction: Geodia.initData
+        });
+        
     };
-    // look for supplied data parameters
-    if (options.dataUrl) {
-        ds.type = "json_string";
-        ds.options.url = options.dataUrl
-    }
-    else {
-        ds.type = "basic";
-        ds.options.items = [];
-    }
-    
-    // initialize timemap
-    // XXX: Setting Geodia.tm is a temporary measure; 
-    // w/multiple objects, you'd need an array
-    Geodia.tm = this.tm = TimeMap.init({
-        mapId: options.mapId,
-        timelineId: options.timelineId,
-        options: {
-            openInfoWindow: TimeMapItem.openPeriodWindow,
-            mapType: options.mapType
-        },
-        scrollTo: options.scrollTo,
-        datasets: [ ds ],
-        bands: Geodia.bands,
-        dataLoadedFunction: Geodia.initData
-    });
-    
 };
+
+$(document).ready(function(){
+    // initialize
+    Geodia.controller.init();
+});
+
+/*----------------------------------------------------------------------------
+ * TimeMap extensions
+ *---------------------------------------------------------------------------*/
 
 /**
  * Static function: initialize timemap data once loaded
@@ -120,17 +144,6 @@ Geodia.initData = function(tm) {
 		}
 	});
 };
-
-$(document).ready(function(){
-    
-    // initialize interface
-    Geodia.Interface.init();
-    
-    // initialize Geodia
-    var gda = new Geodia();
-    gda.init();
-    
-});
 
 
 /**

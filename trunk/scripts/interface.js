@@ -33,7 +33,7 @@ Geodia.Interface.init = function() {
                 // call twice to deal w/scrollbar
                 Geodia.Interface.resizePanels();
                 Geodia.Interface.resizePanels();
-                Geodia.tm.timeline.layout();
+                Geodia.controller.tm.timeline.layout();
             }, 200);
         }
     }
@@ -80,8 +80,8 @@ Geodia.Interface.resizePanels = function() {
             .css('left', dw - sbw);
     }
 
-    if (Geodia.tm && Geodia.tm.map) {
-        Geodia.tm.map.checkResize();
+    if (Geodia.controller.tm && Geodia.controller.tm.map) {
+        Geodia.controller.tm.map.checkResize();
     }
 };
 
@@ -105,7 +105,7 @@ Geodia.Interface.addToSiteList = function(item) {
 $(document).ready(function(){
 
 	$('#clear_all').click(function(){
-		Geodia.tm.clear();
+		Geodia.controller.tm.clear();
 		$('ul.site_list').empty();
 		$('#site_title').empty();
 		$('#site_description').empty();
@@ -114,7 +114,7 @@ $(document).ready(function(){
 	});
 
 	$('#show').click(function(){
-//		console.log(Geodia.tm.datasets);
+//		console.log(Geodia.controller.tm.datasets);
 		return false;
 	});
 
@@ -145,7 +145,7 @@ $(document).ready(function(){
 				url = url.substring(0,url.length - 4)+')';
 			}
 			url += '&max=999&auth=http&callback=?';
-			Geodia.tm.clear();
+			Geodia.controller.tm.clear();
 			$('ul.site_list').empty();
 			$.getJSON(url,function(json){
 				var site_array = [];
@@ -163,7 +163,7 @@ $(document).ready(function(){
 					}
 				});
 				if (site_array.length > 0){
-					loadDataSet(Geodia.tm,site_array,val,loader);
+					loadDataSet(Geodia.controller.tm,site_array,val,loader);
 				}
 				else{
 					$('<p>No Results Found</p>').appendTo($('ul.site_list'));
@@ -172,7 +172,7 @@ $(document).ready(function(){
 			});
 		}
 		else{
-            Geodia.tm.clear();
+            Geodia.controller.tm.clear();
             $('ul.site_list').empty();
         }
     });
@@ -198,7 +198,7 @@ $(document).ready(function(){
 				}
 			});
 				if (site_array.length > 0){
-					loadDataSet(Geodia.tm,site_array,val,loader);
+					loadDataSet(Geodia.controller.tm,site_array,val,loader);
 				}
 				else{
 					$('<p>No Results Found</p>').appendTo($('ul.site_list'));
@@ -300,9 +300,9 @@ function cancelJSONP(){
 					        i.event._trackNum = null;
 						}
 				    });
-        	    //var d = Geodia.tm.eventSource.getEarliestDate();
-    	        //Geodia.tm.timeline.getBand(0).setCenterVisibleDate(d);
-	            Geodia.tm.timeline.layout();
+        	    //var d = Geodia.controller.tm.eventSource.getEarliestDate();
+    	        //Geodia.controller.tm.timeline.getBand(0).setCenterVisibleDate(d);
+	            Geodia.controller.tm.timeline.layout();
 	});
 
 });
