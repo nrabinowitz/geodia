@@ -1,15 +1,6 @@
 /*----------------------------------------------------------------------------
  * Collection Functionality
  *---------------------------------------------------------------------------*/
- 
-/**
- * @namespace
- * Namespace to hold functions dealing with collection querying and data loading
- * XXX: this won't be needed once the service is set up properly
- */
-Geodia.Collection = {
-    SERVICE: "http://www.laits.utexas.edu/geodia/modules/geodia"
-};
 
 /**
  * @class

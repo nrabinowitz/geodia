@@ -141,7 +141,6 @@ $(document).ready(function(){
 	});
 
 	$('#show').click(function(){
-//		console.log(Geodia.controller.tm.datasets);
 		return false;
 	});
 
@@ -189,17 +188,7 @@ $(document).ready(function(){
 			$(this).siblings().toggle();
 			Geodia.Interface.resizePanels();
 	});
-
-	
-	function exists(ar,o) {
-		for(var i = 0; i < ar.length; i++)
-			   if (ar[i] === o)
-				        return true;
-		return false;
-	}
-	function UrlToSerial(url){
-		return url.substring(url.lastIndexOf('/')+1,url.length).replace('.atom','');
-	}
+    
 	$('ul.site_list li').live('click',function(){
 		var item = $(this).data('site');
 		var dataset = $(this).data('dataset');
@@ -211,8 +200,6 @@ $(document).ready(function(){
 		}
 		item.hide();
 		item.hidePlacemark();
-//		console.log(item);
-//		item.clear();
 		if (dataset.items.length == 1){
 			dataset.clear();
 			if (name == $('#site_title').text()){
@@ -224,14 +211,12 @@ $(document).ready(function(){
 		}
 		$(this).remove();
 		delete item;
-					dataset.each(function(i) {
-						if (i.event){
-					        i.event._trackNum = null;
-						}
-				    });
-        	    //var d = Geodia.controller.tm.eventSource.getEarliestDate();
-    	        //Geodia.controller.tm.timeline.getBand(0).setCenterVisibleDate(d);
-	            Geodia.controller.tm.timeline.layout();
+        dataset.each(function(i) {
+            if (i.event){
+                i.event._trackNum = null;
+            }
+        });
+        Geodia.controller.tm.timeline.layout();
 	});
 
 });
