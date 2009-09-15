@@ -98,6 +98,33 @@ Geodia.Interface.addToSiteList = function(item) {
     $(site).data('dataset', item.dataset);
 };
 
+/**
+ * Clear site list
+ */
+Geodia.Interface.clearSiteList = function() {
+    $('ul.site_list').empty();
+};
+
+/**
+ * Show or hide loading animation
+ *
+ * @param {Boolean} loading     Whether loading is on or off     
+ */
+Geodia.Interface.toggleLoading = function(loading) {
+    var loaderId = "ajax_loader";
+    if (loading) {
+        // check that the loader isn't already visible
+        if ($("#" + loaderId).size() < 1) {
+            // add loader image
+            $('<img id="' + loaderId + '" src="images/ajax-loader.gif"/>')
+                .insertAfter($('div.site_admin h1'));
+        }
+    }
+    else {
+        $("#" + loaderId).remove();
+    }
+};
+
 /*----------------------------------------------------------------------------
  * Admin Panel
  *---------------------------------------------------------------------------*/
@@ -105,7 +132,7 @@ Geodia.Interface.addToSiteList = function(item) {
 $(document).ready(function(){
 
 	$('#clear_all').click(function(){
-		Geodia.controller.tm.clear();
+		Geodia.controller.clear();
 		$('ul.site_list').empty();
 		$('#site_title').empty();
 		$('#site_description').empty();
@@ -120,123 +147,25 @@ $(document).ready(function(){
 
 	$('input[type="checkbox"]').attr('checked',false);
 	$('input[type="text"]').val('');
-	$('input[type="checkbox"]').click(function(){
-		var val = $(this).val().toLowerCase();
-		var type = $(this).parent('div').attr('id');
-		var url = Geodia.Collection.SERVICE+'/search.json?c=geodia&q=item_type:site_period';
-		var cultures = $('#culture_list').children('input[type="checkbox"]:checked');
-		var regions = $('#region_list').children('input[type="checkbox"]:checked');
-		var total = $(cultures).size() + $(regions).size();
-		cancelJSONP();
-		if (total > 0) { 
-			var loader = $('<img id="ajax_loader" src="images/ajax-loader.gif"/>').insertAfter($('div.site_admin h1'));
-			if ($(cultures).size() > 0){
-				url += ' AND parent_period:(';
-				$(cultures).each(function(i,n){
-					url += 	$(n).val().replace('/','* OR ')+'* OR ';			
-				});
-				url = url.substring(0,url.length - 4)+')';
-			}
-			if ($(regions).size() > 0){
-				url += ' AND site_region:(';
-				$(regions).each(function(i,n){
-					url += $(n).val()+' OR ';
-				});
-				url = url.substring(0,url.length - 4)+')';
-			}
-			url += '&max=999&auth=http&callback=?';
-			Geodia.controller.tm.clear();
-			$('ul.site_list').empty();
-			$.getJSON(url,function(json){
-				var site_array = [];
-				$('#admin_bar').find('p').remove();
-				$.each(json,function(i,n){
-					if (n.itemtype.term == 'site'){
-						if (!exists(site_array,UrlToSerial(n.editlink))){
-							site_array.push(UrlToSerial(n.editlink));
-						}
-					}
-					else if (n.metadata.site_region){
-						if (!exists(site_array,UrlToSerial(n.metadata.site_region[0].url))){
-							site_array.push(UrlToSerial(n.metadata.site_region[0].url));
-						}
-					}
-				});
-				if (site_array.length > 0){
-					loadDataSet(Geodia.controller.tm,site_array,val,loader);
-				}
-				else{
-					$('<p>No Results Found</p>').appendTo($('ul.site_list'));
-					$(loader).remove();
-				}
-			});
-		}
-		else{
-            Geodia.controller.tm.clear();
-            $('ul.site_list').empty();
-        }
+	$('input[type="checkbox"]').click(function() {
+		var cultures = [], regions = [];
+        $('#culture_list')
+            .children('input[type="checkbox"]:checked')
+            .each(function(i, el){
+                cultures.push($(el).val());			
+            });
+		$('#region_list')
+            .children('input[type="checkbox"]:checked')
+            .each(function(i, el){
+                regions.push($(el).val());			
+            });
+        Geodia.controller.loadFacets(cultures, regions);
     });
 
 	$('#search_button').click(function(){
-		var val = $(this).prev('input').val().toLowerCase();
-		var loader = $('<img src="images/ajax-loader.gif"/>').insertAfter($('div.site_admin h1'));
-		var url = Geodia.Collection.SERVICE+'/search.json?c=geodia&q='+val+'* NOT item_type:(image OR period)&max=999&callback=?';
-		$.getJSON(url,function(json){
-			var site_array = [];
-			$.each(json,function(i,n){
-				if (n.metadata.site_region ){
-					if (n.metadata.parent_period[1].text.toLowerCase().search(val) != -1 || n.metadata.site_region[0].text.toLowerCase().search(val) != -1){
-						if (!exists(site_array,UrlToSerial(n.metadata.site_region[0].url))){
-							site_array.push(UrlToSerial(n.metadata.site_region[0].url));
-						}
-					}
-				}
-				else if (n.metadata.site_name){
-					if (!exists(site_array,UrlToSerial(n.editlink)) ){
-						site_array.push(UrlToSerial(n.editlink));
-					}
-				}
-			});
-				if (site_array.length > 0){
-					loadDataSet(Geodia.controller.tm,site_array,val,loader);
-				}
-				else{
-					$('<p>No Results Found</p>').appendTo($('ul.site_list'));
-				}
-		});
+        var term = $(this).prev('input').val();
+        Geodia.controller.loadSearch(term);
 	});
-	function loadDataSet(tm,site_array,name,gif){
-		var ds = tm.createDataset(name,{
-			title: name,
-			classicTape:true
-		});
-		ds.eventSource = tm.eventSource;
-		var loader = new TimeMap.loaders.jsonp({url:Geodia.Collection.SERVICE+'/dataset?site_sernums='+escape(site_array.toString())+'&auth=http&callback='});
-		loader.load(ds, function() { 
-            Geodia.initData(tm); 
-       	    var d = tm.eventSource.getEarliestDate();
-   	        tm.timeline.getBand(0).setCenterVisibleDate(d);
-            tm.timeline.layout();
-		});
-	}
-
-function cancelJSONP(){
-	for(var i in TimeMap.loaders.jsonp){
-		if (i.substr(0,1) == '_'){
-			TimeMap.loaders.jsonp[i] = function(){
-				delete TimeMap.loaders.jsonp[i];
-			};
-		}
-	}
-	for (var i in window){
-		if (i.substr(0,5) == 'jsonp'){
-			window[i] = function(){
-				try{ delete window[ i ]; } catch(e){}
-			};
-		}
-	}
-	$('#ajax_loader').remove();
-}
 
 	//toggle sidebars
 	$('div.toggler').click(function(){

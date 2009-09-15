@@ -83,6 +83,71 @@ Geodia.controller = new function() {
         });
         
     };
+    
+    /**
+     * Clean up before loading
+     */
+    this.preloadCleanUp = function() {
+        var ds = this.tm.datasets.sites,
+            ui = this.ui;
+        // clear dataset and site list
+        this.clear();
+        // clear any other async loads
+        TimeMap.loaders.jsonp.cancelAll();
+        // start load animation
+        ui.toggleLoading(true);
+    };
+    
+    /**
+     * Callback after loading
+     */
+    this.postload = function() {
+        Geodia.resetTimeMap(Geodia.controller.tm);
+        Geodia.controller.ui.toggleLoading(false);
+    };
+    
+    /**
+     * Load data by facet selection
+     *
+     * @param {String[]} cultures       List of cultures for the query
+     * @param {String[]} regions        List of regions for the query
+     */
+    this.loadFacets = function(cultures, regions){
+        var total = cultures.length + regions.length;
+        if (total > 0) {
+            this.preloadCleanUp();
+            // load data
+            this.loader.loadFacets(cultures, regions, this.tm.datasets.sites, this.postload);
+        }
+        else {
+            this.clear();
+        }
+	};
+    
+    /**
+     * Load data by search query
+     *
+     * @param {String} term             Term to search on
+     */
+    this.loadSearch = function(term){
+        if (term) {
+            this.preloadCleanUp();
+            // load data
+            this.loader.loadSearch(term, this.tm.datasets.sites, this.postload);
+        }
+        else {
+            this.clear();
+        }
+	};
+    
+    /**
+     * Clear dataset(s)
+     */
+    this.clear = function() {
+        // XXX: may need to deal with multiples
+        this.tm.datasets.sites.clear();
+        this.ui.clearSiteList();
+    };
 };
 
 $(document).ready(function(){
@@ -145,6 +210,17 @@ Geodia.initData = function(tm) {
 	});
 };
 
+/**
+ * Static function - reset the timemap when loading new data
+ *
+ * @param {TimeMap} tm      TimeMap to reset
+ */
+Geodia.resetTimeMap = function(tm) { 
+    Geodia.initData(tm); 
+    var d = tm.eventSource.getEarliestDate();
+    tm.timeline.getBand(0).setCenterVisibleDate(d);
+    tm.timeline.layout();
+};
 
 /**
  * Set the placemark to a specific theme
