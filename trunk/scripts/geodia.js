@@ -37,7 +37,7 @@ Geodia.controller = new function() {
         
         /** The associated interface **/
         this.ui = Geodia.Interface;
-        this.ui.init();
+        var ui = this.ui;
         
         // initialize loader
         
@@ -79,7 +79,10 @@ Geodia.controller = new function() {
             scrollTo: options.scrollTo,
             datasets: [ ds ],
             bands: Geodia.bands,
-            dataLoadedFunction: Geodia.initData
+            dataLoadedFunction: function(tm) {
+                ui.init();
+                Geodia.initData(tm);
+            }
         });
         
     };
@@ -90,10 +93,10 @@ Geodia.controller = new function() {
     this.preloadCleanUp = function() {
         var ds = this.tm.datasets.sites,
             ui = this.ui;
-        // clear dataset and site list
-        this.clear();
         // clear any other async loads
         TimeMap.loaders.jsonp.cancelAll();
+        // clear dataset and site list
+        this.clear();
         // start load animation
         ui.toggleLoading(true);
     };
@@ -102,7 +105,10 @@ Geodia.controller = new function() {
      * Callback after loading
      */
     this.postload = function() {
-        Geodia.resetTimeMap(Geodia.controller.tm);
+        // wrap in a try to ignore cancelled calls
+        try {
+            Geodia.resetTimeMap(Geodia.controller.tm);
+        } catch(e) {}
         Geodia.controller.ui.toggleLoading(false);
     };
     

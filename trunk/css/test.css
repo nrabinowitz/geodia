@@ -96,47 +96,51 @@ div.image_info p{
 hr{
 	background-color:black;
 }
+#login {
+    padding: 5px 15px 0px 0px;
+    float: right;
+}
 #admin_bar{
 	background-color:gray;
 	height:inherit;
 	position:absolute;
 	z-index:80;
+    color: #FFFFFF;
 }
 #admin_bar input[type="text"]{
 	margin-left:5px;
 }
-#admin_bar p{
+#admin_bar p {
 	text-align:center;
-	color:white;
 }
-#admincontent{
+#admincontent {
 	position:absolute;
 }
-#culture_list{
+#culture_list {
 	width:100%;
 	font-size:.9em;
 }
-#culture_list label{
-	padding-left:15px;
+#culture_list label {
+	padding-left: 5px;
 }
 #culture_list input[type="checkbox"]{
-	float:right;
+	margin: 2px 0px 0px 5px;
 }
-#region_list{
+#region_list {
 	width:100%;
 	font-size:.9em;
 }
-#region_list label{
-	padding-left:15px;
+#region_list label {
+	padding-left: 5px;
 }
 #region_list input[type="checkbox"]{
-	float:right;
+	margin: 2px 0px 0px 5px;
 }
-ul.site_list{
+ul.site_list {
 	overflow-y:auto;
 	height:250px;
 }
-div.site_admin h1{
+div.site_admin h1 {
 	margin-top:15px;
 }
 ul.site_list li{
@@ -213,6 +217,7 @@ div.toggler_right div{
     margin-left: 2px;
     font-family: "Trebuchet MS", "Bitstream Vera Sans", Verdana, sans-serif;
     font-size: 11px;
+    height: 14px;
 }
 .infotitle {
     font-weight:bold;
