@@ -10,8 +10,10 @@ Geodia = {};
 /**
  * @class   
  * Singleton Controller class containing data and functions specific to the Geodia site.
+ * XXX: This may need to be tweaked down the road to deal with multiple instantiations
  */
 Geodia.controller = new function() {
+    var controller = this;
     
     /**
      * Initialize the controller, including the timemap and interface
@@ -36,8 +38,7 @@ Geodia.controller = new function() {
         // initialize interface
         
         /** The associated interface **/
-        this.ui = Geodia.Interface;
-        var ui = this.ui;
+        var ui = this.ui = new Geodia.Interface(this, options);
         
         // initialize loader
         
@@ -65,9 +66,6 @@ Geodia.controller = new function() {
             ds.options.items = [];
         }
         
-        // XXX: Setting Geodia.tm is a temporary measure; 
-        // w/multiple objects, you'd need an array
-        
         /** The associated TimeMap object */
         this.tm = TimeMap.init({
             mapId: options.mapId,
@@ -81,7 +79,7 @@ Geodia.controller = new function() {
             bands: Geodia.bands,
             dataLoadedFunction: function(tm) {
                 ui.init();
-                Geodia.initData(tm);
+                controller.initData(tm);
             }
         });
         
@@ -107,9 +105,9 @@ Geodia.controller = new function() {
     this.postload = function() {
         // wrap in a try to ignore cancelled calls
         try {
-            Geodia.resetTimeMap(Geodia.controller.tm);
+            controller.resetTimeMap();
         } catch(e) {}
-        Geodia.controller.ui.toggleLoading(false);
+        controller.ui.toggleLoading(false);
     };
     
     /**
@@ -145,88 +143,93 @@ Geodia.controller = new function() {
             this.clear();
         }
 	};
+	
+	/**
+     * Initialize timemap data once loaded
+     *
+     * @param {TimeMap} tm      TimeMap to initialize
+     */
+    this.initData = function(tm) {
+        // set up periods as an EventIndex
+        tm.eachItem(function(item) {
+            item.loadPeriods();
+            controller.ui.addToSiteList(item);
+        });
+        
+        // add culture filter chain
+        tm.addFilterChain("culture",
+            // true condition: change marker icon
+            function(item) {
+                var p = item.getPeriod();
+                if (p) {
+                    item.setPlacemarkTheme(p.theme);
+                }
+            },
+            // false condition: do nothing
+            function(item) { }
+        );
+        // filter: change icon if visible
+        tm.addFilter("culture", function(item) {
+            return item.placemarkVisible;
+        });
+        // add listener for filter chain
+        tm.timeline.getBand(0).addOnScrollListener(function() {
+            tm.filter("culture");
+        });
+        
+        // filter timeline events according to map
+        tm.addFilter("timeline", TimeMap.filters.visibleOnMap);
+        // add listener to filter timeline
+	    GEvent.addListener(tm.map, 'moveend', function(){
+		    tm.filter("timeline");
+		    var loadedPeriods = false;
+		    tm.eachItem(function(item) {
+                if (item.periods && !loadedPeriods){
+                    loadedPeriods = true;
+                }
+                item.event._trackNum = null;
+		    });
+		    if (loadedPeriods){
+			    tm.timeline.layout();
+		    }
+	    });
+    };
+
+    /**
+     * Reset the timemap when loading new data
+     */
+    this.resetTimeMap = function() { 
+        var tm = this.tm;
+        // initialize data, adding periods
+        this.initData(tm); 
+        // scroll appropriately
+        var d = tm.eventSource.getEarliestDate();
+        tm.timeline.getBand(0).setCenterVisibleDate(d);
+        tm.timeline.layout();
+    };
     
     /**
      * Clear dataset(s)
      */
     this.clear = function() {
-        // XXX: may need to deal with multiples
         this.tm.datasets.sites.clear();
         this.ui.clearSiteList();
     };
+    
+    /**
+     * Refresh the timeline
+     */
+    this.checkResize = function() {
+        if (this.tm) {
+            this.tm.map.checkResize();
+            this.tm.timeline.layout();
+        }
+    };
 };
-
-$(document).ready(function(){
-    // initialize
-    Geodia.controller.init();
-});
 
 /*----------------------------------------------------------------------------
  * TimeMap extensions
  *---------------------------------------------------------------------------*/
-
-/**
- * Static function: initialize timemap data once loaded
- *
- * @param {TimeMap} tm      TimeMap for which to initialize data
- */
-Geodia.initData = function(tm) {
-    // set up periods as an EventIndex
-    tm.eachItem(function(item) {
-        item.loadPeriods();
-        Geodia.Interface.addToSiteList(item);
-    });
-    
-    // add culture filter chain
-    tm.addFilterChain("culture",
-        // true condition: change marker icon
-        function(item) {
-            var p = item.getPeriod();
-            if (p) {
-                item.setPlacemarkTheme(p.theme);
-            }
-        },
-        // false condition: do nothing
-        function(item) { }
-    );
-    // filter: change icon if visible
-    tm.addFilter("culture", function(item) {
-        return item.placemarkVisible;
-    });
-    // add listener for filter chain
-    tm.timeline.getBand(0).addOnScrollListener(function() {
-        tm.filter("culture");
-    });
-    
-    // filter timeline events according to map
-    tm.addFilter("timeline", TimeMap.filters.visibleOnMap);
-    // add listener to filter timeline
-	GEvent.addListener(tm.map, 'moveend', function(){
-		tm.filter("timeline");
-		var loadedPeriods = false;
-		tm.eachItem(function(item) {
-            if (item.periods && !loadedPeriods){
-                loadedPeriods = true;
-            }
-            item.event._trackNum = null;
-		});
-		if (loadedPeriods){
-			tm.timeline.layout();
-		}
-	});
-};
-
-/**
- * Static function - reset the timemap when loading new data
- *
- * @param {TimeMap} tm      TimeMap to reset
- */
-Geodia.resetTimeMap = function(tm) { 
-    Geodia.initData(tm); 
-    var d = tm.eventSource.getEarliestDate();
-    tm.timeline.getBand(0).setCenterVisibleDate(d);
-    tm.timeline.layout();
-};
 
 /**
  * Set the placemark to a specific theme

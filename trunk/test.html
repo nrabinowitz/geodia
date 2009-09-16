@@ -15,6 +15,14 @@
     <script src="scripts/geodia.js" type="text/javascript"></script>
     <script src="scripts/collection.js" type="text/javascript"></script>
     <script src="scripts/interface.js" type="text/javascript"></script>
+    <script type="text/javascript">
+
+$(document).ready(function() {
+    // initialize
+    Geodia.controller.init();
+});
+
+    </script>
   </head>
 
   <body onunload="GUnload();">
@@ -81,7 +89,7 @@
 				<input type='checkbox' name='the_levant' value="the_levant"/><label for='the_levant'>The Levant</label>
 			</div>
 			<br />
-			<input name='search_text' type='text' value=''/>
+			<input id='search_text' name='search_text' type='text' value=''/>
 			<input id='search_button' type='submit' value='Search'/>
 			<div class='site_admin'>
 				<!--			<a id='clear_all'>Clear All</a> -->
