@@ -29,24 +29,25 @@ TimeMap.loaders.dase = function() {
         // build query
         var url = loader.SERVICE + '/search.json?c=geodia&q=item_type:site_period'
             query = "";
+			var cache = false;
         // add cultures
         if (cultures && cultures.length > 0) {
             query += ' AND parent_period:(';
             for (var x=0; x<cultures.length; x++) {
-                query += cultures[x].toLowerCase().replace('/','* OR ') + '* OR ';
+                query += cultures[x].toLowerCase().replace('/','* OR ') + ' OR ';
             }
             query = query.substring(0,query.length - 4)+')';
         }
         // add regions
         if (regions && regions.length > 0) {
-            query += ' AND parent_period:(';
+            query += ' AND site_region:(';
             for (var x=0; x<regions.length; x++) {
                 query += regions[x].toLowerCase() + ' OR ';
             }
             query = query.substring(0,query.length - 4)+')';
         }
         // finish query URL
-        url += escape(query) + '&max=999&auth=http&callback=';
+        url += escape(query) + '&max=999&auth=http&cache='+cache+'&callback=';
         loader.url = url;
         // XXX: This assumes that the URL is a straight JSONP call, 
         // not the double-call currently in use
