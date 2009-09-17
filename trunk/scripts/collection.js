@@ -29,7 +29,7 @@ TimeMap.loaders.dase = function() {
         // build query
         var url = loader.SERVICE + '/search.json?c=geodia&q=item_type:site_period'
             query = "";
-			var cache = false;
+			var cache = true;
         // add cultures
         if (cultures && cultures.length > 0) {
             query += ' AND parent_period:(';
