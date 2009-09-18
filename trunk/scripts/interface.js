@@ -23,7 +23,9 @@ Geodia.Interface = function(controller, options) {
         /** Which side the sidebar is on */
         sbside: 'r',
         /** Which side the admin panel is on */
-        adminside: 'l'
+        adminside: 'l',
+        /** number of events to be shown on the timeline */
+        eventLimit: 6
     };
     
     /** 
@@ -111,6 +113,9 @@ Geodia.Interface = function(controller, options) {
                 .css('border-left', border)
                 .css('left', dw - sbw);
         }
+        
+        // reset event limit based on timeline height
+        this.opts.eventLimit = ($("#timeline").height() * .8 - 15) / 21;
 
         this.controller.checkResize();
     };
@@ -129,6 +134,13 @@ Geodia.Interface = function(controller, options) {
      */
     this.clearSiteList = function() {
         this.siteList.clear();
+    };
+    
+    /**
+     * Get number of events to show
+     */
+    this.getEventLimit = function() {
+        return this.opts.eventLimit;
     };
     
     /**
