@@ -177,11 +177,43 @@ Geodia.controller = new function() {
             tm.filter("culture");
         });
         
+        // add function to sort items by rank
+        var rankItems = function() {
+            // add visible items to array
+            var items = [], x;
+            tm.eachItem(function(item) {
+                if (TimeMap.filters.visibleOnMap(item)) items.push(item);
+            });
+            // sort by zoom_level
+            // XXX: could get more complicated if we add a cultural importance too
+            items.sort(function(a, b) {
+                return a.opts.zoom_level - b.opts.zoom_level;
+            });
+            for (x=0; x<items.length; x++) {
+                items[x].rank = x;
+            }
+        };
+        // set initial rank
+        rankItems();
+        // filter timeline events according to rank
+        tm.addFilter("timeline", function(item) {
+            var limit = controller.getEventLimit();
+            return ("rank" in item) && item.rank <= limit; 
+        });
+        // filter map placemarks so that hidden events are hidden
+        tm.addFilter("map", function(item) {
+            return item.eventVisible;
+        });
+        
         // filter timeline events according to map
         tm.addFilter("timeline", TimeMap.filters.visibleOnMap);
         // add listener to filter timeline
 	    GEvent.addListener(tm.map, 'moveend', function(){
+            // set rank
+            rankItems();
+            // filter timeline events
 		    tm.filter("timeline");
+            // layout timeline again, if periods are loaded
 		    var loadedPeriods = false;
 		    tm.eachItem(function(item) {
                 if (item.periods && !loadedPeriods){
@@ -224,6 +256,13 @@ Geodia.controller = new function() {
             this.tm.map.checkResize();
             this.tm.timeline.layout();
         }
+    };
+    
+    /**
+     * Get the practical limit of items on the timeline
+     */
+    this.getEventLimit = function() {
+        return this.ui.getEventLimit();
     };
 };
 
