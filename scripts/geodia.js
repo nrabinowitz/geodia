@@ -79,6 +79,7 @@ Geodia.controller = new function() {
             bands: Geodia.bands,
             dataLoadedFunction: function(tm) {
                 ui.init();
+                controller.initFilters(tm);
                 controller.initData(tm);
             }
         });
@@ -143,19 +144,13 @@ Geodia.controller = new function() {
             this.clear();
         }
 	};
-	
-	/**
-     * Initialize timemap data once loaded
+    
+    /**
+     * Initialize timemap filters once loaded
      *
      * @param {TimeMap} tm      TimeMap to initialize
      */
-    this.initData = function(tm) {
-        // set up periods as an EventIndex
-        tm.eachItem(function(item) {
-            item.loadPeriods();
-            controller.ui.addToSiteList(item);
-        });
-        
+    this.initFilters = function(tm) {
         // add culture filter chain
         tm.addFilterChain("culture",
             // true condition: change marker icon
@@ -177,24 +172,6 @@ Geodia.controller = new function() {
             tm.filter("culture");
         });
         
-        // add function to sort items by rank
-        var rankItems = function() {
-            // add visible items to array
-            var items = [], x;
-            tm.eachItem(function(item) {
-                if (TimeMap.filters.visibleOnMap(item)) items.push(item);
-            });
-            // sort by zoom_level
-            // XXX: could get more complicated if we add a cultural importance too
-            items.sort(function(a, b) {
-                return a.opts.zoom_level - b.opts.zoom_level;
-            });
-            for (x=0; x<items.length; x++) {
-                items[x].rank = x;
-            }
-        };
-        // set initial rank
-        rankItems();
         // filter timeline events according to rank
         tm.addFilter("timeline", function(item) {
             var limit = controller.getEventLimit();
@@ -207,12 +184,19 @@ Geodia.controller = new function() {
         
         // filter timeline events according to map
         tm.addFilter("timeline", TimeMap.filters.visibleOnMap);
+        
         // add listener to filter timeline
 	    GEvent.addListener(tm.map, 'moveend', function(){
+            //console.profile("rank");
             // set rank
-            rankItems();
+            controller.rankItems(tm);
+            //console.profileEnd();
+            //console.profile("filter");
             // filter timeline events
 		    tm.filter("timeline");
+            //console.profileEnd();
+            
+            //console.profile("layout");
             // layout timeline again, if periods are loaded
 		    var loadedPeriods = false;
 		    tm.eachItem(function(item) {
@@ -224,7 +208,46 @@ Geodia.controller = new function() {
 		    if (loadedPeriods){
 			    tm.timeline.layout();
 		    }
+            //console.profileEnd();
 	    });
+    };
+	
+	/**
+     * Initialize timemap data once loaded
+     *
+     * @param {TimeMap} tm      TimeMap to initialize
+     */
+    this.initData = function(tm) {
+        // set up periods as an EventIndex
+        tm.eachItem(function(item) {
+            item.loadPeriods();
+            controller.ui.addToSiteList(item);
+        });
+        // set initial rank
+        // XXX: this involves another iteration - might be better consolidated
+        controller.rankItems(tm);
+    };
+    
+    /**
+     * Sort items by rank
+     *
+     * @param {TimeMap} tm      TimeMap to sort items for
+     */
+    this.rankItems = function(tm) {
+        // add visible items to array
+        var items = [], x;
+        tm.eachItem(function(item) {
+            // XXX: is this slowing things down?
+            if (TimeMap.filters.visibleOnMap(item)) items.push(item);
+        });
+        // sort by zoom_level
+        // XXX: could get more complicated if we add a cultural importance too
+        items.sort(function(a, b) {
+            return a.opts.zoom_level - b.opts.zoom_level;
+        });
+        for (x=0; x<items.length; x++) {
+            items[x].rank = x;
+        }
     };
 
     /**
