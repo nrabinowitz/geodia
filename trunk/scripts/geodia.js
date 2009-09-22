@@ -187,16 +187,10 @@ Geodia.controller = new function() {
         
         // add listener to filter timeline
 	    GEvent.addListener(tm.map, 'moveend', function(){
-            //console.profile("rank");
             // set rank
             controller.rankItems(tm);
-            //console.profileEnd();
-            //console.profile("filter");
             // filter timeline events
 		    tm.filter("timeline");
-            //console.profileEnd();
-            
-            //console.profile("layout");
             // layout timeline again, if periods are loaded
 		    var loadedPeriods = false;
 		    tm.eachItem(function(item) {
@@ -208,7 +202,6 @@ Geodia.controller = new function() {
 		    if (loadedPeriods){
 			    tm.timeline.layout();
 		    }
-            //console.profileEnd();
 	    });
     };
 	
@@ -333,7 +326,12 @@ TimeMapItem.prototype.getPeriod = function(d) {
     if (!this.periods) return null;
     // get center date if none given
     if (!d) d = this.dataset.timemap.timeline.getBand(0).getCenterVisibleDate();
+    // look for the next date after the center
     var iterator = this.periods.getIterator(d, new Date());
+    if (!iterator.hasNext()) {
+        // event only exists in the past
+        var iterator = this.periods.getReverseIterator(this.event.getStart(), d);
+    }
     return iterator.next();
 };
 
