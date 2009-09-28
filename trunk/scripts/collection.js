@@ -15,7 +15,7 @@ TimeMap.loaders.dase = function() {
      * Base URL of the service 
      * @type String
      */
-    loader.SERVICE = "http://www.laits.utexas.edu/geodia/modules/geodia";
+    loader.SERVICE = "http://www.laits.utexas.edu/geodia/modules/geodia/dataset/sites.json";
     
     /**
      * Retrieve a query with a list of cultures and regions
@@ -27,7 +27,7 @@ TimeMap.loaders.dase = function() {
      */
     loader.loadFacets = function(cultures, regions, dataset, callback) {
         // build query
-        var url = loader.SERVICE + '/search.json?c=geodia&q=item_type:site_period'
+        var url = loader.SERVICE + '?c=geodia&q=item_type:site_period'
             query = "";
 			var cache = true;
         // add cultures
@@ -64,7 +64,7 @@ TimeMap.loaders.dase = function() {
     loader.loadSearch = function(term, dataset, callback) {
         term = term.toLowerCase();
         // build query
-        var url = loader.SERVICE + '/search.json?c=geodia&q=' + escape(term) + '* NOT item_type:(image OR period)&max=999&callback=';
+        var url = loader.SERVICE + '?c=geodia&q=' + escape(term) + '* NOT item_type:(image OR period)&max=999&callback=';
         loader.url = url
         // XXX: This assumes that the URL is a straight JSONP call, 
         // not the double-call currently in use
