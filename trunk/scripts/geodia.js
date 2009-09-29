@@ -411,21 +411,6 @@ TimeMapItem.prototype.loadPeriods = function(){
             p.getEnd = function() {
                 return parser(p.end);
             };
-			/*
-            p.getImages = function() {
-                if(p.options){
-                    if(p.options.images){
-                        return p.options.images;
-                    }
-                    else{
-                        return false;
-                    }
-                }
-                else{
-                    return false;
-                }
-            };
-			*/
             p.getID = function() {
                 return x;
             };
