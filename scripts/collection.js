@@ -15,6 +15,9 @@ TimeMap.loaders.dase = function() {
      * Base URL of the service 
      * @type String
      */
+	/* TEST URL */
+   	// loader.SERVICE = "http://dev.laits.utexas.edu/geodia/dase/modules/geodia";
+	/* PRODUCTION URL */
     loader.SERVICE = "http://www.laits.utexas.edu/geodia/modules/geodia/dataset/sites.json";
     
     /**

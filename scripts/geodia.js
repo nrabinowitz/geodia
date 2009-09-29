@@ -366,7 +366,28 @@ TimeMapItem.openPeriodWindow = function() {
     }
     // custom functions will need to set this as well
     this.selected = true;
-	Geodia.Interface.initImageViewer(p,this.periods,site_name,this.opts.description);
+	this.getImages(function(site,new_site){
+		Geodia.Interface.initImageViewer(site,p,new_site);
+	})
+};
+TimeMapItem.prototype.getImages = function(callback){
+	//check to see if already loaded
+	if($(this).data('images') != undefined) return callback(this,false);
+	var site = this;
+	//Better place to put this?
+	var url = 'http://www.laits.utexas.edu/geodia/modules/geodia';
+	//gets rid of images in sidebar if another site has been selected
+	if(site.opts.description != $('#site_description').text()){
+	    $('#site_title').text(site.opts.title);
+		$('#site_description').text(site.opts.description);
+		$('ul.site_periods').empty();
+		$('<h1>Downloading Images ...</h1>').appendTo($('ul.site_periods'));
+	}
+	//response isnt cached on server side yet, but still seems fast
+	$.getJSON(url+'/dataset/images.json?sernum='+this.opts.serial_number+'&callback=?',function(resp){
+		$(site).data('images',resp);
+		callback(site,true);
+	});
 };
 
 TimeMapItem.prototype.loadPeriods = function(){    
@@ -390,6 +411,7 @@ TimeMapItem.prototype.loadPeriods = function(){
             p.getEnd = function() {
                 return parser(p.end);
             };
+			/*
             p.getImages = function() {
                 if(p.options){
                     if(p.options.images){
@@ -403,6 +425,7 @@ TimeMapItem.prototype.loadPeriods = function(){
                     return false;
                 }
             };
+			*/
             p.getID = function() {
                 return x;
             };
