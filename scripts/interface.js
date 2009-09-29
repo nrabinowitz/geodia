@@ -218,42 +218,6 @@ Geodia.SiteList = function(ui, controller) {
             // add to site list
             .appendTo(site_list);
             
-        /* XXX: Not sure why clicking these items deletes the site now -
-        we probably want a separate function for that. Also
-        not sure about the performance consequences of the .live()
-        function - better to add the handler when a site is added to the list,
-        now in a separate function.
-            
-	    site.click(function(){
-		    var item = $(this).data('site');
-		    var dataset = $(this).data('dataset');
-		    var name = $(this).data('name');
-		    if (name == $('#site_title').text()){
-			    $('#site_title').empty();
-			    $('#site_description').empty();
-			    $('ul.site_periods').empty();
-		    }
-		    item.hide();
-		    item.hidePlacemark();
-		    if (dataset.items.length == 1){
-			    dataset.clear();
-			    if (name == $('#site_title').text()){
-				    $('#site_title').empty();
-				    $('#site_description').empty();
-				    $('ul.site_periods').empty();
-			    }
-			    delete dataset;
-		    }
-		    $(this).remove();
-		    delete item;
-            dataset.each(function(i) {
-                if (i.event){
-                    i.event._trackNum = null;
-                }
-            });
-            Geodia.controller.tm.timeline.layout();
-	    });
-	    */
     };
 
     /**
@@ -358,7 +322,7 @@ Geodia.Interface.initImageViewer = function(site,current_period,new_site){
 	   	while(p.hasNext()){
 			var period = p.next();
 			var li = '<li';
-			if(period.term == current_period.term){
+			if(period.term+period.start == current_period.term+current_period.start){
 				li += ' class="selected" ';
 			}
 			li += '><p><span>'+period.term+'</span> '+period.start+' - '+period.end+'</p>';

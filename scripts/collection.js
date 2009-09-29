@@ -52,8 +52,6 @@ TimeMap.loaders.dase = function() {
         // finish query URL
         url += escape(query) + '&max=999&auth=http&cache='+cache+'&callback=';
         loader.url = url;
-        // XXX: This assumes that the URL is a straight JSONP call, 
-        // not the double-call currently in use
         loader.load(dataset, callback);
     };
     
@@ -69,8 +67,6 @@ TimeMap.loaders.dase = function() {
         // build query
         var url = loader.SERVICE + '?c=geodia&q=' + escape(term) + '* NOT item_type:(image OR period)&max=999&callback=';
         loader.url = url
-        // XXX: This assumes that the URL is a straight JSONP call, 
-        // not the double-call currently in use
         loader.load(dataset, callback);
     };
     
