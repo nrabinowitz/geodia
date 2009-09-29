@@ -345,83 +345,49 @@ Geodia.AdminPanel = function(ui, controller) {
  * Initialize images for a selected site
  * XXX: This needs some love - conflates the sidebar set up with the image viewer
  */
-Geodia.Interface.initImageViewer = function(current, periods, site_name, description){
-        
-    // utility function
-    function formatName(name){
-        name = name.replace(/ /g,'_').toLowerCase().replace(/\//g,'_');
-        return name;
-    }
-    
-    if (site_name != $('#site_title').text()){
-        var sb_ul = $('ul.site_periods');
-        var li_sum_heights = 0;
-        $(sb_ul).empty();
-        $('#site_title').text(site_name);
-        $('#site_description').text(description);
-        var p = periods.getAllIterator();
-        while(p.hasNext()){
-            var period = p.next();
-            var images = period.getImages();
-            var li = '';
-            if (formatName(current.term)+'_'+formatName(current.culture) == formatName(period.term)+'_'+formatName(period.culture)) {
-                li += '<li class="selected '+formatName(period.term)+'_'+formatName(period.culture)+'"><p><span>'+period.term+'</span> '+period.start+' - '+period.end+'</p>';
-            }
-            else{
-                li += '<li class="'+formatName(period.term)+'_'+formatName(period.culture)+'"><p><span>'+period.term+'</span> '+period.start+' - '+period.end+'</p>';
-            }
-            if (images) {
-                for(var i in images){
-                    if (images[i]['large'] != null){
-                        li += '<a href="'+images[i]['large']+'"><img src="'+images[i]['thumb']+'"/>';
-                    }
-                    else if (images[i]['medium'] != null){
-                        li += '<a href="'+images[i]['medium']+'"><img src="'+images[i]['thumb']+'"/>';
-                    }
-                    else{
-                        li += '<a href="'+images[i]['small']+'"><img src="'+images[i]['thumb']+'"/>';
-                    }
-                    li += '<div style="display:none" class="image_info">';
-                    if (images[i].metadata['title']){
-                        li += '<p class="image_title"><span>Description: </span>'+images[i].metadata['title']+'</p>';
-                    }
-                    if (images[i].metadata['image_date']){
-                        li += '<p class="image_date"><span>Date: </span>'+images[i].metadata['image_date']+'</p>';
-                    }
-                    if (images[i].metadata['source']){
-                        li += '<p class="image_source"><span>Source: </span>'+images[i].metadata['source']+'</p>';
-                    }
-                    if (images[i].metadata['created_in']){
-                        li += '<p class="image_created"><span>Created In: </span>'+images[i].metadata['created_in']+'</p>';
-                    }
-                    if (images[i].metadata['found_in']){
-                        li += '<p class="image_found"><span>Found In: </span>'+images[i].metadata['found_in']+'</p>';
-                    }
-                    li += '</div></a>';
-                }
-            }
-            li += '</li>';
-            var appended = $(li).appendTo(sb_ul);
-            $(appended).children('a').lightBox();
+Geodia.Interface.initImageViewer = function(site,current_period,new_site){
 
-            if ($(appended).hasClass('selected')){
-                $('ul.site_periods').animate({scrollTop:li_sum_heights},'slow');
-            }
+	var p = site.periods.getAllIterator();
+	var images = $(site).data('images');
+	var sb_ul = $('ul.site_periods');
+    var li_sum_heights = 0;
+	if(new_site || $('#site_description').text() != site.opts.description){
+		$('#site_title').text(site.opts.title);
+   		$('#site_description').text(site.opts.description);
+		$(sb_ul).empty();
+	   	while(p.hasNext()){
+			var period = p.next();
+			var li = '<li';
+			if(period.term == current_period.term){
+				li += ' class="selected" ';
+			}
+			li += '><p><span>'+period.term+'</span> '+period.start+' - '+period.end+'</p>';
+			if(images[period.serial]){
+				var image_set = images[period.serial].images;
+				for(var i in image_set){
+   		    		li += '<a href="'+image_set[i]['large']+'"><img src="'+image_set[i]['thumb']+'"/>';
+				}
+			}
+			li += '</li>';
+	        var appended = $(li).appendTo(sb_ul);
+           $(appended).children('a').lightBox();
+	           if ($(appended).hasClass('selected')){
+           	    $('ul.site_periods').animate({scrollTop:li_sum_heights},'slow');
+       	    }
             li_sum_heights += $(appended).height() + 20; 
-        }
-    }
-    else{
-        var li_sum_heights = 0;
+		}
+	}
+	else{
         $('ul.site_periods li').each(function(i,n){
-            if ($(n).hasClass(formatName(current.term)+'_'+formatName(current.culture))){
+			if($(n).children('p').text() == current_period.term+' '+current_period.start+' - '+current_period.end){
                 $('ul.site_periods').animate({scrollTop:li_sum_heights},'slow');
                 $(n).addClass('selected');
-            }
-            else{
+			}
+			else{
                 $(n).removeClass('selected');
             }
              li_sum_heights += $(n).height() + 20; 
         });
-        
-    }
+	}
+
 };
