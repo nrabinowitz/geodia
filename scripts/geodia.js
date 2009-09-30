@@ -175,7 +175,7 @@ Geodia.controller = new function() {
         // filter timeline events according to rank
         tm.addFilter("timeline", function(item) {
             var limit = controller.getEventLimit();
-            return ("rank" in item) && item.rank <= limit; 
+            return item.show && ("rank" in item) && item.rank <= limit; 
         });
         // filter map placemarks so that hidden events are hidden
         tm.addFilter("map", function(item) {
@@ -183,12 +183,12 @@ Geodia.controller = new function() {
         });
         
         // filter timeline events according to map
-        tm.addFilter("timeline", TimeMap.filters.visibleOnMap);
+        //tm.addFilter("timeline", TimeMap.filters.visibleOnMap);
         
         // add listener to filter timeline
 	    GEvent.addListener(tm.map, 'moveend', function(){
-            // set rank
-            controller.rankItems(tm);
+			//set rank
+			controller.rankItems(tm);
             // filter timeline events
 		    tm.filter("timeline");
             // layout timeline again, if periods are loaded
@@ -214,13 +214,13 @@ Geodia.controller = new function() {
         // set up periods as an EventIndex
         tm.eachItem(function(item) {
             item.loadPeriods();
-            controller.ui.addToSiteList(item);
+        	controller.ui.addToSiteList(item);
         });
         // set initial rank
         // XXX: this involves another iteration - might be better consolidated
         controller.rankItems(tm);
     };
-    
+
     /**
      * Sort items by rank
      *
@@ -229,19 +229,36 @@ Geodia.controller = new function() {
     this.rankItems = function(tm) {
         // add visible items to array
         var items = [], x;
-        tm.eachItem(function(item) {
+		tm.eachItem(function(item){
+			item.rank = 0;
+			item.show = true;
             // XXX: is this slowing things down?
-            if (TimeMap.filters.visibleOnMap(item)) items.push(item);
-        });
+				// SR: It is but since we are invoking it here I removed it from the filter list. 
+    	    if (!TimeMap.filters.visibleOnMap(item)){
+		   		item.show = false;
+				item.rank += 4;
+			}
+			if(!item.lock){
+				item.rank += item.opts.zoom_level;
+			}
+			items.push(item);
+		});
         // sort by zoom_level
         // XXX: could get more complicated if we add a cultural importance too
         items.sort(function(a, b) {
-            return a.opts.zoom_level - b.opts.zoom_level;
+            return a.rank - b.rank;
         });
         for (x=0; x<items.length; x++) {
             items[x].rank = x;
         }
+		//update sitelist to indicate any new changes in rank
+		controller.ui.siteList.update();
     };
+
+	this.toggleLock = function(item){
+		item.lock = !item.lock;
+	};
+
 
     /**
      * Reset the timemap when loading new data
