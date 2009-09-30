@@ -227,14 +227,12 @@ Geodia.controller = new function() {
      * @param {TimeMap} tm      TimeMap to sort items for
      */
     this.rankItems = function(tm) {
-        // add visible items to array
         var items = [], x;
+		var bounds = tm.map.getBounds();
 		tm.eachItem(function(item){
 			item.rank = 0;
 			item.show = true;
-            // XXX: is this slowing things down?
-				// SR: It is but since we are invoking it here I removed it from the filter list. 
-    	    if (!TimeMap.filters.visibleOnMap(item)){
+    	    if (!bounds.containsLatLng(item.getInfoPoint())){
 		   		item.show = false;
 				item.rank += 4;
 			}
@@ -317,16 +315,6 @@ TimeMapItem.prototype.setPlacemarkTheme = function(theme) {
                 pm.setImage(theme.iconImage);
         }
     }
-};
-
-/**
- * Filter: Determine whether the current item is visible on the map
- *
- * @param {TimeMapItem} item    Item to test
- */
-TimeMap.filters.visibleOnMap = function(item){
-	var bounds = item.map.getBounds();
-	return bounds.containsLatLng(item.getInfoPoint());
 };
  
 /*----------------------------------------------------------------------------
