@@ -213,12 +213,22 @@ Geodia.SiteList = function(ui, controller) {
             .data('site', item)
             // add click handler
             .click(function() {
-                item.openInfoWindow();
+				controller.toggleLock(item); 
+				GEvent.trigger(controller.tm.map,'moveend');
             })
             // add to site list
             .appendTo(site_list);
-            
     };
+
+	this.update = function(){
+		$('ul.site_list li').each(function(i,n){
+			var item = $(n).data('site');
+			//make bold if locked
+			(item.lock) ? $(n).css('font-weight','bold') : $(n).css('font-weight','normal');
+			//change color if it is displayed on timeline
+			(item.show && item.rank <= controller.ui.getEventLimit()) ? $(n).css('color','#C3463A') : $(n).css('color','white');
+		});
+	};
 
     /**
      * Clear site list
