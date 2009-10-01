@@ -30,7 +30,7 @@ TimeMap.loaders.dase = function() {
      */
     loader.loadFacets = function(cultures, regions, dataset, callback) {
         // build query
-        var url = loader.SERVICE + '?c=geodia&q=item_type:site_period'
+        var url = loader.SERVICE + '?c=geodia&q=item_type:site_period';
             query = "";
 			var cache = true;
         // add cultures
@@ -64,8 +64,9 @@ TimeMap.loaders.dase = function() {
      */
     loader.loadSearch = function(term, dataset, callback) {
         term = term.toLowerCase();
+		var cache = true;
         // build query
-        var url = loader.SERVICE + '?c=geodia&q=' + escape(term) + '* NOT item_type:(image OR period)&max=999&callback=';
+        var url = loader.SERVICE + '?c=geodia&q=' + escape(term) + '* NOT item_type:(image OR period)&max=999&auth=http&cache='+cache+'&callback=';
         loader.url = url
         loader.load(dataset, callback);
     };

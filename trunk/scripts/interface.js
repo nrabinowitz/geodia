@@ -19,11 +19,11 @@ Geodia.Interface = function(controller, options) {
         /** Whether the detail sidebar is open */
         sbopen: false,
         /** Whether the admin query panel sidebar is open */
-        adminopen: false,
+       // adminopen: false,
         /** Which side the sidebar is on */
         sbside: 'r',
         /** Which side the admin panel is on */
-        adminside: 'l',
+      //  adminside: 'l',
         /** number of events to be shown on the timeline */
         eventLimit: 6
     };
@@ -38,7 +38,7 @@ Geodia.Interface = function(controller, options) {
     this.siteList = new Geodia.SiteList(this, this.controller);
     
     /** The associated admin panel */
-    this.adminPanel = new Geodia.AdminPanel(this, this.controller);
+	this.searchPanel = new Geodia.SearchPanel(this, this.controller);
     
     
     var ui = this;
@@ -54,6 +54,25 @@ Geodia.Interface = function(controller, options) {
 	        ui.toggleSidebar(id);
 		    $(this).siblings().toggle();
 	    });
+
+		//setup tab action
+		var map_offset = $('#timemap').offset();
+		$('#tabs a').click(function(){
+			var id = $(this).attr('id');
+			var offset = $(this).offset();
+			var tab = $('#'+id+'_content');
+			if($(tab).is(':visible')){
+				$('div.tab_content').slideUp('fast');
+			}
+			else{
+				$('div.tab_content:visible').slideUp('fast');
+				$(tab).css('top',map_offset.top).css('left',offset.left).slideDown('fast');	
+			}
+			return false;
+		});
+
+
+
         
         // set up panels
         this.resizePanels();
@@ -81,13 +100,13 @@ Geodia.Interface = function(controller, options) {
         var dh = $(window).height();
         var dw = $(window).width();
         var sbw = options.sbopen ? 350 : 20;
-        var adw = options.adminopen ? 350 : 20;
+        var adw = 0;// options.adminopen ? 350 : 20;
         var hh = 31;
         // size timemap and sidebar
 	    var sbh = dh - hh;
         $('#timemap').height(dh - hh)
             .width(dw - sbw - adw);
-	    $('ul.site_periods').height(sbh * .9);
+	    $('ul.site_periods').height(sbh);
         $('#sidebar').height(dh - hh)
             .width(sbw);
         $('#admin_bar').height(dh - hh)
@@ -128,6 +147,10 @@ Geodia.Interface = function(controller, options) {
     this.addToSiteList = function(item) {
         this.siteList.add(item);
     };
+
+	this.updateSiteCount = function(count){
+		$('#site_count').text('('+count+')');
+	};
 
     /**
      * Clear site list
@@ -225,8 +248,14 @@ Geodia.SiteList = function(ui, controller) {
 			var item = $(n).data('site');
 			//make bold if locked
 			(item.lock) ? $(n).css('font-weight','bold') : $(n).css('font-weight','normal');
-			//change color if it is displayed on timeline
-			(item.show && item.rank <= controller.ui.getEventLimit()) ? $(n).css('color','#C3463A') : $(n).css('color','white');
+			//change color if it is displayed on timeline and add to top
+			if(item.show && item.rank <= controller.ui.getEventLimit()){
+			   	$(n).css('color','#C3463A')
+				$(n).prependTo($('ul.site_list'));
+			}
+			else{
+				$(n).css('color','white');
+			}
 		});
 	};
 
@@ -240,7 +269,7 @@ Geodia.SiteList = function(ui, controller) {
 
 
 /*----------------------------------------------------------------------------
- * Admin Panel
+ * Search Panel
  *---------------------------------------------------------------------------*/
 
 /**
@@ -251,7 +280,7 @@ Geodia.SiteList = function(ui, controller) {
  * @param {Geodia.Interface} ui             Associated interface
  * @param {Geodia.Controller} controller    Associated controller
  */
-Geodia.AdminPanel = function(ui, controller) {
+Geodia.SearchPanel = function(ui, controller) {
 
     /** The associated interface */
     this.ui = ui;
@@ -264,7 +293,6 @@ Geodia.AdminPanel = function(ui, controller) {
      */
     this.clear = function() {
 		controller.clear();
-		$('ul.site_list').empty();
 		$('#site_title').empty();
 		$('#site_description').empty();
 		$('ul.site_periods').empty();
@@ -300,7 +328,7 @@ Geodia.AdminPanel = function(ui, controller) {
     // Initialize panel
         
     // clear panel
-    $('#admin_bar input[type="checkbox"]').attr('checked',false);
+    $('input[type="checkbox"]').attr('checked',false);
     $('#search_text').val('');
     
     // set handlers
@@ -308,6 +336,12 @@ Geodia.AdminPanel = function(ui, controller) {
     $('#culture_list input[type="checkbox"]').click(this.loadFacets);
     $('#region_list input[type="checkbox"]').click(this.loadFacets);
     $('#search_button').click(this.loadSearch);
+	var search = this.loadSearch;
+    $('#search_text').keyup(function(e){
+		if(e.keyCode == 13){
+			search();
+		}
+	});
 
 };
 
