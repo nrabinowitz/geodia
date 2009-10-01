@@ -64,10 +64,79 @@ a:hover, a:active {
 	padding-top:5px;
 	font-size:.8em;
 }
+#tabs{
+    padding: 10px 0px 0px 0px;
+	text-align:center;
+}
+#tabs a{
+	margin-left:1em;
+	margin-right:1em;
+	text-decoration:none;
+}
+#tabs a:hover{
+	color:black;
+}
+div.tab_content{
+	display:none;
+	position:absolute;
+	z-index:100;
+	background-color:gray;
+	/*
+	opacity: 0.9; 
+	-webkit-opacity: 0.9; 
+	*/
+	min-width:200px;
+	border:2px solid white;
+	padding:3px;
+}
+
+#culture_list {
+	width:100%;
+	font-size:.9em;
+}
+#culture_list label {
+	padding-left: 5px;
+}
+#culture_list input[type="checkbox"]{
+	margin: 2px 0px 0px 5px;
+}
+#region_list {
+	width:100%;
+	font-size:.9em;
+}
+#region_list label {
+	padding-left: 5px;
+}
+#region_list input[type="checkbox"]{
+	margin: 2px 0px 0px 5px;
+}
+ul.site_list {
+	overflow-y:auto;
+	max-height:300px;
+}
+ul.site_list li{
+	padding-left:15px;
+}
+ul.site_list li:hover{
+	cursor:pointer;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 ul.site_periods{
 	overflow-y:auto;
 	overflow-x:hidden;
-	margin-top:15px;
+	width:328px;
 }
 ul.site_periods li{
 	position:relative;
@@ -99,56 +168,6 @@ hr{
 #login {
     padding: 5px 15px 0px 0px;
     float: right;
-}
-#admin_bar{
-	background-color:gray;
-	height:inherit;
-	position:absolute;
-	z-index:80;
-    color: #FFFFFF;
-}
-#admin_bar input[type="text"]{
-	margin-left:5px;
-}
-#admin_bar p {
-	text-align:center;
-}
-#admincontent {
-	position:absolute;
-}
-#culture_list {
-	width:100%;
-	font-size:.9em;
-}
-#culture_list label {
-	padding-left: 5px;
-}
-#culture_list input[type="checkbox"]{
-	margin: 2px 0px 0px 5px;
-}
-#region_list {
-	width:100%;
-	font-size:.9em;
-}
-#region_list label {
-	padding-left: 5px;
-}
-#region_list input[type="checkbox"]{
-	margin: 2px 0px 0px 5px;
-}
-ul.site_list {
-	overflow-y:auto;
-	height:250px;
-}
-div.site_admin h1 {
-	margin-top:15px;
-}
-ul.site_list li{
-	padding-left:15px;
-}
-ul.site_list li:hover{
-	cursor:pointer;
-	color:#C3463A;
 }
 div.toggler:hover{
 	cursor:pointer;

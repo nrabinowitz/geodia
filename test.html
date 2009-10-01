@@ -34,13 +34,10 @@ $(document).ready(function() {
         <div id="header">
             <h1>Geodia</h1>
             <div id="login"><a href='http://www.laits.utexas.edu/geodia' target="_blank">Log in</a></div>
+			<div id='tabs'><a id='search' href="">Search</a><a id='site_list' href=''>Site List <span id='site_count'></span></a><a id='details' href=''>Details</a></div>
 		 </div>
 	 </div>
-	<div id='admin_bar'>
-		<div class='toggler_left toggler'>
-			<div></div>
-		</div>
-		<div style='display:none' id='admincontent'>
+		<div id='search_content' class='tab_content'>
 			<div id='culture_list'>
 				<h1>Culture</h1>
 				<input type='checkbox' name='akkadian&#47;assyrian' value="akkadian&#47;assyrian"/><label for='akkadian&#47;assyrian'>Akkadian/Assyrian</label>
@@ -95,20 +92,23 @@ $(document).ready(function() {
 			<br />
 			<input id='search_text' name='search_text' type='text' value=''/>
 			<input id='search_button' type='submit' value='Search'/>
-			<div class='site_admin'>
-				<h1>Sites:</h1>
-				<ul class='site_list'>
-				</ul>
-			</div>
 		</div>
-	</div>
+
+		<div id='site_list_content' class='tab_content'>
+			<ul class='site_list'></ul>
+		</div>
+		<div id='details_content' class='tab_content'>
+			<h1 id='site_title'></h1>
+			<h2 id='site_description'></h2>
+		</div>
+
+
+
     <div id="sidebar">
 		<div class='toggler_right toggler'>
 			<div></div>
 		</div>
         <div style='display:none' id="sbcontent">
-			<h1 id='site_title'></h1>
-			<h2 id='site_description'></h2>
 			<ul class="site_periods"></ul>
         </div>
     </div>
