@@ -182,9 +182,6 @@ Geodia.controller = new function() {
             return item.eventVisible;
         });
         
-        // filter timeline events according to map
-        //tm.addFilter("timeline", TimeMap.filters.visibleOnMap);
-        
         // add listener to filter timeline
 	    GEvent.addListener(tm.map, 'moveend', function(){
 			//set rank
@@ -212,10 +209,13 @@ Geodia.controller = new function() {
      */
     this.initData = function(tm) {
         // set up periods as an EventIndex
+		var count = 0;
         tm.eachItem(function(item) {
             item.loadPeriods();
         	controller.ui.addToSiteList(item);
+			count += 1;
         });
+		controller.ui.updateSiteCount(count);
         // set initial rank
         // XXX: this involves another iteration - might be better consolidated
         controller.rankItems(tm);
@@ -232,17 +232,16 @@ Geodia.controller = new function() {
 		tm.eachItem(function(item){
 			item.rank = 0;
 			item.show = true;
-    	    if (!bounds.containsLatLng(item.getInfoPoint())){
-		   		item.show = false;
-				item.rank += 4;
-			}
 			if(!item.lock){
+	    	    if (!bounds.containsLatLng(item.getInfoPoint())){
+			   		item.show = false;
+					item.rank += 4;
+				}
 				item.rank += item.opts.zoom_level;
 			}
 			items.push(item);
 		});
-        // sort by zoom_level
-        // XXX: could get more complicated if we add a cultural importance too
+        // sort by rank
         items.sort(function(a, b) {
             return a.rank - b.rank;
         });
@@ -379,6 +378,7 @@ TimeMapItem.prototype.getImages = function(callback){
 	//check to see if already loaded
 	if($(this).data('images') != undefined) return callback(this,false);
 	var site = this;
+	var cache = true;
 	//Better place to put this?
 	var url = 'http://www.laits.utexas.edu/geodia/modules/geodia';
 	//gets rid of images in sidebar if another site has been selected
@@ -386,10 +386,10 @@ TimeMapItem.prototype.getImages = function(callback){
 	    $('#site_title').text(site.opts.title);
 		$('#site_description').text(site.opts.description);
 		$('ul.site_periods').empty();
-		$('<h1>Downloading Images ...</h1>').appendTo($('ul.site_periods'));
+		$('<h1>Downloading Images ... </h1>').appendTo($('ul.site_periods'));
 	}
 	//response isnt cached on server side yet, but still seems fast
-	$.getJSON(url+'/dataset/images.json?sernum='+this.opts.serial_number+'&callback=?',function(resp){
+	$.getJSON(url+'/dataset/images.json?sernum='+this.opts.serial_number+'&auth=http&cache='+cache+'&callback=?',function(resp){
 		$(site).data('images',resp);
 		callback(site,true);
 	});
