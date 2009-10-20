@@ -74,7 +74,8 @@
 			settings.activeImage = 0;
 			// We have an image set? Or just an image? Let´s see it.
 			if ( jQueryMatchedObj.length == 1 ) {
-				settings.imageArray.push(new Array(objClicked.getAttribute('href'),objClicked.getAttribute('title')));
+				var image_info = $(jQueryMatchedObj[0]).siblings('div.metadata').html();
+				settings.imageArray.push(new Array(objClicked.getAttribute('href'),objClicked.getAttribute('title'),image_info));
 			} else {
 				// Add an Array (as many as we have), with href and title atributes, inside the Array that storage the images references		
 				for ( var i = 0; i < jQueryMatchedObj.length; i++ ) {
