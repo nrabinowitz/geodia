@@ -28,27 +28,36 @@ TimeMap.loaders.dase = function() {
      * @param {TimeMapDataset} dataset  Dataset to load data into
      * @param {Function} callback       Function to call once data is loaded
      */
-    loader.loadFacets = function(cultures, regions, dataset, callback) {
+    loader.loadFacets = function(cultures, regions, term, dataset, callback) {
         // build query
-        var url = loader.SERVICE + '?c=geodia&q=item_type:site_period';
+        var url = loader.SERVICE + '?c=geodia&q=';
             query = "";
 			var cache = true;
         // add cultures
         if (cultures && cultures.length > 0) {
-            query += ' AND parent_period:(';
+            query += 'parent_period:(';
             for (var x=0; x<cultures.length; x++) {
                 query += cultures[x].toLowerCase().replace('/','* OR ') + ' OR ';
             }
             query = query.substring(0,query.length - 4)+')';
         }
+		if(regions.length > 0  && cultures.length > 0){
+			query += ' AND ';
+		}
         // add regions
         if (regions && regions.length > 0) {
-            query += ' AND site_region:(';
+            query += 'site_region:(';
             for (var x=0; x<regions.length; x++) {
                 query += regions[x].toLowerCase() + ' OR ';
             }
             query = query.substring(0,query.length - 4)+')';
         }
+		if(term){
+			if(regions.length > 0 || cultures.length > 0){
+				query += ' OR ';
+			}
+			query += '(' + term.toLowerCase().replace(' or ',' OR ') + '* NOT item_type:(image OR period)) NOT note:('+term.toLowerCase().replace(' or ',' OR ')+')';
+		}
         // finish query URL
         url += escape(query) + '&max=999&auth=http&cache='+cache+'&callback=';
         loader.url = url;

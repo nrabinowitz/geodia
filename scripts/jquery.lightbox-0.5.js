@@ -78,7 +78,7 @@
 			} else {
 				// Add an Array (as many as we have), with href and title atributes, inside the Array that storage the images references		
 				for ( var i = 0; i < jQueryMatchedObj.length; i++ ) {
-					var image_info = $(jQueryMatchedObj[i]).children('div.image_info').html();
+					var image_info = $(jQueryMatchedObj[i]).siblings('div.metadata').html();
 					settings.imageArray.push(new Array(jQueryMatchedObj[i].getAttribute('href'),jQueryMatchedObj[i].getAttribute('title'),image_info));
 				}
 			}
