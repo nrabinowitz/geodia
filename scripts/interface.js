@@ -417,10 +417,18 @@ Geodia.SitePeriods = function(ui, controller) {
 					li += '<p class="period_name"><span>'+period.term+'</span> '+period.start+' - '+period.end+'</p><ul class="thumbs" style="width:'+ul_size+'px" >';
 					for(var i in image_set){
    		    			li += '<li><a class="thumb" href="'+image_set[i]['large']+'"><img src="'+image_set[i]['thumb']+'"/></a><div style="display:none" class="metadata">';
-						li += '<p><span>Title: </span>'+image_set[i].metadata['title']+'</p>';
-						li += '<p><span>Site: </span>'+image_set[i].metadata['site_name']+'</p>';
-						li += '<p><span>Date: </span>'+image_set[i].metadata['image_date']+'</p>';
-						li += '<p><span>Source: </span>'+image_set[i].metadata['source']+'</p>';
+						if(image_set[i].metadata['title'] != undefined){
+							li += '<p><span>Title: </span>'+image_set[i].metadata['title']+'</p>';
+						}
+						if(image_set[i].metadata['site_name'] != undefined){
+							li += '<p><span>Site: </span>'+image_set[i].metadata['site_name']+'</p>';
+						}
+						if(image_set[i].metadata['image_date'] != undefined){
+							li += '<p><span>Date: </span>'+image_set[i].metadata['image_date']+'</p>';
+						}
+						if(image_set[i].metadata['source'] != undefined){
+							li += '<p><span>Source: </span>'+image_set[i].metadata['source']+'</p>';
+						}
 						li += '</div></li>';
 					}
 					li += '</ul><div class="slider"></div>';
