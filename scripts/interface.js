@@ -419,6 +419,7 @@ Geodia.SitePeriods = function(ui, controller) {
    		    			li += '<li><a class="thumb" href="'+image_set[i]['large']+'"><img src="'+image_set[i]['thumb']+'"/></a><div style="display:none" class="metadata">';
 						li += '<p><span>Title: </span>'+image_set[i].metadata['title']+'</p>';
 						li += '<p><span>Site: </span>'+image_set[i].metadata['site_name']+'</p>';
+						li += '<p><span>Date: </span>'+image_set[i].metadata['image_date']+'</p>';
 						li += '<p><span>Source: </span>'+image_set[i].metadata['source']+'</p>';
 						li += '</div></li>';
 					}
