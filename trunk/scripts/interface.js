@@ -68,6 +68,7 @@ Geodia.Interface = function(controller, options) {
 
         // set up panels
         this.resizePanels();
+        this.resizePanels();
         
         // set up resize function
         // XXX: with more than one Geodia object, we'd need a chain here
@@ -93,7 +94,7 @@ Geodia.Interface = function(controller, options) {
         var dw = $(window).width();
         var sbw = options.sbopen ? 350 : 30;
         var adw = 0;// options.adminopen ? 350 : 20;
-        var hh = 31;
+        var hh = 32;
         // size timemap and sidebar
 	    var sbh = dh - hh;
 		$('#timemap').height(dh - hh);
