@@ -65,7 +65,9 @@ div.toggler_right{
 	opacity:.7;
 	filter:alpha(opacity=70);
 	-moz-border-radius-topleft:5px;
+	-webkit-border-top-left-radius:5px;
 	-moz-border-radius-bottomleft:5px;
+	-webkit-border-bottom-left-radius:5px;
 	margin-left:10px;
 }
 div.toggler_right:hover{
@@ -97,6 +99,7 @@ div.toggler_right div.east{
 	border-left:1px solid #C2CAD1; 
     z-index: 10;
 	width:100%;
+	overflow:hidden;
 }
 #sbcontent div.tab_content{
 	display:none;
@@ -127,7 +130,9 @@ div.toggler_right div.east{
 	padding-top:5px;
 	background-color:#C3463A;
 	-moz-border-radius-topleft:5px;
+	-webkit-border-top-left-radius:5px;
 	-moz-border-radius-topright:5px;
+	-webkit-border-top-right-radius:5px;
 	list-style-type:none;
 }
 #tabs li.selected{
@@ -144,6 +149,10 @@ div.toggler_right div.east{
 }
 #tabs a:hover{
 	color:#D3DCDE;
+}
+#search_content{
+	overflow-y:auto;
+	width:319px;
 }
 
 #search_content input[type="text"]{
