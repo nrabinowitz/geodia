@@ -750,7 +750,7 @@ Geodia.bands = [];
             eventPainter:   Geodia.PeriodEventPainter
         }),
         Timeline.createHotZoneBandInfo({
-            eventSource:    false,
+            eventSource:    null,
             width:          "20%", 
             intervalUnit:   Timeline.DateTime.MILLENNIUM,
             intervalPixels: 100,

@@ -76,13 +76,25 @@ TimeMap.loaders.dase = function() {
 		var cache = true;
         // build query
         var url = loader.SERVICE + '?c=geodia&q=' + escape(term) + '* NOT item_type:(image OR period)&max=999&auth=http&cache='+cache+'&callback=';
-        loader.url = url
+        loader.url = url;
         loader.load(dataset, callback);
     };
     
+    /*
+    loader.load = function(dataset, callback) {
+        // get items
+        TimeMap.loaders.jsonp.read(this.url, function(result) {
+            // load
+            var items = loader.preload(result);
+            console.time("loading");
+            dataset.loadItems(items, loader.transform);
+            console.timeEnd("loading");
+            // callback
+            console.time("callback");
+            callback();
+            console.timeEnd("callback");
+        });
+    }; */
+    
     return loader;
 };
-
-// XXX: all of the loading functionality should be moved here
-// Probably, this should work like one of the loader services,
-// swappable for another service as needed
