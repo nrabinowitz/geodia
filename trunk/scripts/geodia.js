@@ -81,6 +81,13 @@ Geodia.controller = new function() {
                 ui.init();
                 controller.initFilters(tm);
                 controller.initData(tm);
+                // check and correct overzoom
+                GEvent.addListener(tm.datasets.sites, 'itemsloaded', function() {
+                    maxZoom = 17;
+                    if (tm.map.getZoom() > maxZoom) {
+                        map.setZoom(maxZoom);
+                    }
+                });
             }
         });
         
