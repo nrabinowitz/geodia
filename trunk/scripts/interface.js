@@ -17,7 +17,7 @@ Geodia.Interface = function(controller, options) {
     
     var defaults = {
         /** Whether the detail sidebar is open */
-        sbopen: false,
+        sbopen: true,
         /** Whether the admin query panel sidebar is open */
        // adminopen: false,
         /** Which side the sidebar is on */
@@ -41,7 +41,10 @@ Geodia.Interface = function(controller, options) {
 	this.searchPanel = new Geodia.SearchPanel(this, this.controller);
 
     /** The associated image viewer */
-	this.sitePeriods= new Geodia.SitePeriods(this, this.controller);
+	this.sitePeriods = new Geodia.SitePeriods(this, this.controller);
+
+	/** The associated image search */
+	this.imageSearch = new Geodia.ImageSearch(this, this.controller);
 
 	/** SideBar */
 	this.sideBar = new Geodia.SideBar(this,this.controller);
@@ -59,10 +62,58 @@ Geodia.Interface = function(controller, options) {
 			ui.toggleSidebar();
 	    });
 
+		//set action for previous button - BETA
+		$('#prev_search').click(function(){
+			var prev = controller.Queue[controller.Queue.length - 2];
+			if(prev){
+				var fn = prev[0];
+				var temp_args = $.makeArray(prev[1]);
+				temp_args.push(true);
+				if( typeof fn == 'function'){
+					if(typeof prev[1][1] != 'function' && prev[1].length > 1){
+						controller.ui.searchPanel.cultures = [];
+						controller.ui.searchPanel.clearPanel();
+						controller.ui.sideBar.display('search');
+						//Need to fill in check boxes
+						var cultures = prev[1][0];
+						var regions = prev[1][1];
+						var term = prev[1][2];
+						for(var i in cultures){
+							$('input[name="'+cultures[i]+'"]').attr('checked',true);
+                			controller.ui.searchPanel.cultures.push(cultures[i]);			
+						}
+						for(var k in regions){
+							$('input[name="'+regions[k]+'"]').attr('checked',true);
+						}
+						$('#search_text').val(term);
+                		controller.ui.searchPanel.cultures.push(term);			
+					}
+					else if(typeof prev[1][1] == 'function'){
+						controller.ui.imageSearch.clear();
+						controller.ui.sideBar.display('search_image');
+						$('#search_image_text').val(prev[1][0]);
+					}
+					else{
+						controller.ui.searchPanel.clearPanel();
+					}
+					//calls one of the search methods with previously searched arguments
+			   		fn.apply(controller,temp_args);
+				}
+			}
+			if(controller.Queue.length > 1){
+				controller.Queue.pop();
+			}
+			return false;
+		});
+
+
+
 		//setup tab action
 		$('#tabs a').click(function(){
 			var id = $(this).attr('id');
-			controller.ui.sideBar.display(id);
+			if(id != 'prev_search'){
+				controller.ui.sideBar.display(id);
+			}
 			return false;
 		});
 
@@ -145,13 +196,6 @@ Geodia.Interface = function(controller, options) {
 		this.siteList.updateSiteCount(count);
 	};
 
-    /**
-     * Clear site list
-     */
-//    this.clearSiteList = function() {
-  //      this.siteList.clear();
-    //};
-
 	this.clearAll = function(){
 		this.siteList.clear();
 		this.sitePeriods.clear();
@@ -176,7 +220,7 @@ Geodia.Interface = function(controller, options) {
             if ($("#" + loaderId).length < 1) {
                 // add loader image
                 $('<img id="' + loaderId + '" src="images/ajax-loader.gif"/>')
-                    .insertAfter($('#search_button'));
+                    .insertAfter($('#login'));
             }
         }
         else {
@@ -335,12 +379,16 @@ Geodia.SearchPanel = function(ui, controller) {
         controller.loadFacets(cultures, regions, term);
     };
 
+	this.clearPanel = function(){
+	    $('input[type="checkbox"]').attr('checked',false);
+    	$('#search_text').val('');
+	};
+
     
     // Initialize panel
         
     // clear panel
-    $('input[type="checkbox"]').attr('checked',false);
-    $('#search_text').val('');
+	this.clearPanel();
     
     // set handlers
     $('#clear_all').click(this.clear);
@@ -356,6 +404,85 @@ Geodia.SearchPanel = function(ui, controller) {
 
 };
 
+/*----------------------------------------------------------------------------
+ * Image Search
+ *---------------------------------------------------------------------------*/
+
+Geodia.ImageSearch = function(ui, controller) {
+
+    /** The associated interface */
+    this.ui = ui;
+    
+    /** The associated controller */
+    this.controller = controller;
+
+    
+
+	this.search = function(){
+		var tab = $('#search_image_content').children('.search_results');
+		$(tab).empty();
+        controller.searchImages($('#search_image_text').val(),function(results){
+			var html = '';
+			$(results.items).each(function(i,n){
+				if(n.metadata['site_period'] && n.metadata['site_name'] && n.metadata['title']){
+					html += '<li>';
+					html += '<h1 class="site_name">'+n.metadata['site_name'][0]+'</h1>';
+					if(n.metadata['image_date']){
+						html += '<p>'+n.metadata['image_date'][0]+'</p>';
+					}
+					html += '<p style="display:none" class="region">'+n.metadata['region'][0]+'</p>';
+					html += '<a href="'+results.app_root+n.media['enclosure']+'"><img src="'+results.app_root+n.media['thumbnail']+'"/></a>';
+					html += '<div class="metadata" style="display:none">';
+						html += '<p><span>Title: </span>'+n.metadata['title'][0]+'</p>';
+						html += '<p><span>Site: </span>'+n.metadata['site_name'][0]+'</p>';
+						if(n.metadata['image_date']){
+							html += '<p><span>Date: </span>'+n.metadata['image_date'][0]+'</p>';
+						}
+						if(n.metadata['description']){
+							html += '<p><span>Description: </span>'+n.metadata['description'][0]+'</p>';
+						}
+					html += '</div>';
+					html += '<p class="title">'+n.metadata['title'][0]+'</p>';
+					html += '</li>';
+				}
+			});
+			html += '<div class="spacer"></div>';
+			var imgs = $(tab).append(html);
+			$(imgs).children('li').children('h1').click(function(e){
+					controller.ui.searchPanel.clearPanel();
+					$(this).parent().siblings('li').css('background-color','transparent');
+					$(this).parent().css('background-color','#C2CAD1')
+					var site = $(this).text();
+					var region = $(this).siblings('.region').text();
+        			controller.loadSearch('site_name:'+site+' AND region:'+region);
+					return false;
+			});
+			$(imgs).children('li').children('a').lightBox();
+		});
+	};
+
+	this.clear = function(){
+    	$('#search_image_text').val('');
+		$('#search_image_content').children('.search_results').empty();
+	};
+	
+        
+    // clear panel
+	this.clear();
+    
+    // set handlers
+    $('#search_image_button').click(this.search);
+	var search = this.search;
+    $('#search_image_text').keyup(function(e){
+		if(e.keyCode == 13){
+			search();
+		}
+	});
+
+
+
+
+};
 
 /*----------------------------------------------------------------------------
  * Site Periods  
@@ -369,8 +496,7 @@ Geodia.SitePeriods = function(ui, controller) {
 
 	this.displayLoading = function(site){
 		this.display();
-        $('#site_title').text(site.opts.title);
-        $('#site_description').text(site.opts.description);
+        $('h1.site_title').text(site.opts.title).attr('id',site.opts.serial_number);
         $('ul.site_periods').empty();
         $('<h1>Downloading Images ... </h1>').appendTo($('ul.site_periods'));
 	};
@@ -394,9 +520,8 @@ Geodia.SitePeriods = function(ui, controller) {
 		var sb_ul = $('ul.site_periods');
 		var period_list = '';
     	var li_sum_heights = 0;
-		if(new_site || $('#site_description').text() != site.opts.description){
-			$('#site_title').text(site.opts.title);
-   			$('#site_description').text(site.opts.description);
+		if(new_site || $('h1.site_title').attr('id') != site.opts.serial_number){
+        	$('h1.site_title').text(site.opts.title).attr('id',site.opts.serial_number);
 			$(sb_ul).empty();
 		   	while(p.hasNext()){
 				var period = p.next();
@@ -420,15 +545,17 @@ Geodia.SitePeriods = function(ui, controller) {
 						if(image_set[i].metadata['title'] != undefined){
 							li += '<p><span>Title: </span>'+image_set[i].metadata['title']+'</p>';
 						}
-						if(image_set[i].metadata['site_name'] != undefined){
-							li += '<p><span>Site: </span>'+image_set[i].metadata['site_name']+'</p>';
-						}
 						if(image_set[i].metadata['image_date'] != undefined){
 							li += '<p><span>Date: </span>'+image_set[i].metadata['image_date']+'</p>';
 						}
+						if(image_set[i].metadata['description'] != undefined){
+							li += '<p><span>Description: </span>'+image_set[i].metadata['description']+'</p>';
+						}
+						/*
 						if(image_set[i].metadata['source'] != undefined){
 							li += '<p><span>Source: </span>'+image_set[i].metadata['source']+'</p>';
 						}
+						*/
 						li += '</div></li>';
 					}
 					li += '</ul><div class="slider"></div>';
@@ -451,22 +578,22 @@ Geodia.SitePeriods = function(ui, controller) {
 					$(n).find('div.slider').remove();
 				}
 		        if ($(n).hasClass('selected')){
-        	   	    $('ul.site_periods').animate({scrollTop:li_sum_heights},'slow');
+        	   	    $('ul.site_periods').animate({scrollTop:li_sum_heights + 10},'slow');
 	       	    }
     	        li_sum_heights += $(n).height() + 20; 
 			});
 
 		}
 		else{
-        	$('ul.site_periods li').each(function(i,n){
+        	$('li.site_period').each(function(i,n){
 				if($(n).find('p.period_name').text() == current_period.term+' '+current_period.start+' - '+current_period.end){
-                	$('ul.site_periods').animate({scrollTop:li_sum_heights},'slow');
+                	$('ul.site_periods').animate({scrollTop:li_sum_heights + 10},'slow');
 	                $(n).addClass('selected');
 				}
 				else{
 	                $(n).removeClass('selected');
+        	    	li_sum_heights += $(n).height() + 20; 
     	        }
-        	     li_sum_heights += $(n).height() + 20; 
 	        });
 		}
 	};

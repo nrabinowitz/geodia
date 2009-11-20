@@ -25,8 +25,10 @@ Geodia.controller = new function() {
         // set defaults
         var defaults = {
             mapId: "map",
+			mapZoom: 4,
+			mapCenter: new GLatLng(6,6),
             timelineId: "timeline",
-            mapType: "satellite"
+            mapType: "satellite",
         };
         
         /** 
@@ -66,11 +68,14 @@ Geodia.controller = new function() {
             ds.options.items = [];
         }
         
+		console.log(options);
         /** The associated TimeMap object */
         this.tm = TimeMap.init({
             mapId: options.mapId,
             timelineId: options.timelineId,
             options: {
+				mapZoom: options.mapZoom,
+				mapCenter: options.mapCenter,
                 openInfoWindow: TimeMapItem.openPeriodWindow,
                 mapType: options.mapType
             },
@@ -85,7 +90,7 @@ Geodia.controller = new function() {
                 GEvent.addListener(tm.datasets.sites, 'itemsloaded', function() {
                     maxZoom = 17;
                     if (tm.map.getZoom() > maxZoom) {
-                        map.setZoom(maxZoom);
+                        tm.map.setZoom(maxZoom);
                     }
                 });
             }
@@ -117,6 +122,14 @@ Geodia.controller = new function() {
         } catch(e) {}
         controller.ui.toggleLoading(false);
     };
+
+	this.Queue = [];
+
+	this.addToSetQueue = function(fn,args){
+		controller.Queue.push(arguments);
+	};
+
+
     
     /**
      * Load data by facet selection
@@ -124,12 +137,11 @@ Geodia.controller = new function() {
      * @param {String[]} cultures       List of cultures for the query
      * @param {String[]} regions        List of regions for the query
      */
-    this.loadFacets = function(cultures, regions, term){
-        var total = cultures.length + regions.length;
-		if(term){
-			total += 1;
+    this.loadFacets = function(cultures, regions, term, skip){
+		if(!skip){
+			this.addToSetQueue(this.loadFacets,arguments);
 		}
-        if (total > 0) {
+        if (cultures.length + regions.length > 0 || term) {
             this.preloadCleanUp();
             // load data
             this.loader.loadFacets(cultures, regions, term, this.tm.datasets.sites, this.postload);
@@ -138,22 +150,36 @@ Geodia.controller = new function() {
             this.clear();
         }
 	};
-    
-    /**
-     * Load data by search query
-     *
-     * @param {String} term             Term to search on
-     */
-    this.loadSearch = function(term){
-        if (term) {
+
+    this.loadSearch = function(q,skip){
+		if(!skip){
+			this.addToSetQueue(this.loadSearch,arguments);
+		}
+		if(q){
             this.preloadCleanUp();
-            // load data
-            this.loader.loadSearch(term, this.tm.datasets.sites, this.postload);
-        }
-        else {
-            this.clear();
-        }
+	        this.loader.loadSearch(q, this.tm.datasets.sites, this.postload);
+		}
+		else{
+			this.clear();
+		}
+	}
+
+    
+	//search for images
+    this.searchImages = function(term,callback,skip){
+		if(!skip){
+			this.addToSetQueue(this.searchImages,arguments);
+		}
+        this.ui.toggleLoading(true);
+		var cache = true;
+		var url = 'http://www.laits.utexas.edu/geodia/modules/geodia/dataset/imagesearch.json?q='+escape(term)+'&auth=http&cache='+cache+'&callback=?';
+		$.getJSON(url,function(resp){
+        	controller.ui.toggleLoading(false);
+			callback(resp);
+		});
 	};
+
+
     
     /**
      * Initialize timemap filters once loaded
@@ -578,6 +604,7 @@ Geodia.PeriodEventPainter = function(params) {
     
     // overwrite duration painting
     painter.paintPreciseDurationEvent = function(evt, metrics, theme, highlightIndex) {
+		//doc doesnt seem to be doing anything.....
         var doc = this._timeline.getDocument();
         
         // get the track for the whole event

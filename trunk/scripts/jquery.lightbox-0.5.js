@@ -159,8 +159,8 @@
 				var arrPageSizes = ___getPageSize();
 				// Style overlay and show it
 				$('#jquery-overlay').css({
-					width:		arrPageSizes[0],
-					height:		arrPageSizes[1]
+					width:		arrPageSizes[0] * .8,
+					height:		arrPageSizes[1] * .8
 				});
 				// Get page scroll
 				var arrPageScroll = ___getPageScroll();
@@ -189,7 +189,26 @@
 			objImagePreloader.onload = function() {
 				$('#lightbox-image').attr('src',settings.imageArray[settings.activeImage][0]);
 				// Perfomance an effect in the image container resizing it
-				_resize_container_image_box(objImagePreloader.width,objImagePreloader.height);
+				var temp_height = 0;
+				var temp_width = 0;
+				var scale = objImagePreloader.width / objImagePreloader.height;
+
+				if(objImagePreloader.height > ($(window).height() - 100)){
+					temp_height = Math.floor($(window).height() * .75);
+					temp_width = Math.floor(scale * temp_height);
+					$('#lightbox-image').attr('height',temp_height).attr('width',temp_width);
+				}
+				else if(objImagePreloader.width > $(window).width() - 100){
+					temp_width = Math.floor($(window).width() * .75);
+					temp_height = Math.floor(temp_width / scale);
+					$('#lightbox-image').attr('height',temp_height).attr('width',temp_width);
+				}
+				else{
+					temp_width = objImagePreloader.width;
+					temp_height = objImagePreloader.height;
+					$('#lightbox-image').attr('height',temp_height).attr('width',temp_width);
+				}
+				_resize_container_image_box(temp_width,temp_height);
 				//	clear onLoad, IE behaves irratically with animated gifs otherwise
 				objImagePreloader.onload=function(){};
 			};
@@ -213,7 +232,7 @@
 			var intDiffH = intCurrentHeight - intHeight;
 			// Perfomance the effect
 			$('#lightbox-container-image-box').animate({ width: intWidth, height: intHeight },settings.containerResizeSpeed,function() { _show_image(); });
-			if ( ( intDiffW == 0 ) && ( intDiffH == 0 ) ) {
+			if ( ( intDiffW < 1 ) && ( intDiffH < 1 ) ) {
 				if ( $.browser.msie ) {
 					___pause(250);
 				} else {

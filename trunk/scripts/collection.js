@@ -18,7 +18,7 @@ TimeMap.loaders.dase = function() {
 	/* TEST URL */
    	// loader.SERVICE = "http://dev.laits.utexas.edu/geodia/dase/modules/geodia";
 	/* PRODUCTION URL */
-    loader.SERVICE = "http://www.laits.utexas.edu/geodia/modules/geodia/dataset/sites.json";
+    loader.SERVICE = "http://www.laits.utexas.edu/geodia/modules/geodia/dataset/";
     
     /**
      * Retrieve a query with a list of cultures and regions
@@ -30,7 +30,7 @@ TimeMap.loaders.dase = function() {
      */
     loader.loadFacets = function(cultures, regions, term, dataset, callback) {
         // build query
-        var url = loader.SERVICE + '?c=geodia&q=';
+        var url = loader.SERVICE + 'sites.json?c=geodia&q=';
             query = "";
 			var cache = true;
         // add cultures
@@ -63,22 +63,28 @@ TimeMap.loaders.dase = function() {
         loader.url = url;
         loader.load(dataset, callback);
     };
-    
+
+	loader.loadSearch = function(q,dataset,callback){
+		var cache = false;
+		loader.url = loader.SERVICE + 'sites.json?c=geodia&q='+escape(q)+'&max=999&auth=http&cache='+cache+'&callback=';
+		loader.load(dataset,callback);
+	}
+    /*
     /**
      * Retrieve a query with a search term
      * 
      * @param {String} term             Term to search on
      * @param {TimeMapDataset} dataset  Dataset to load data into
      * @param {Function} callback       Function to call once data is loaded
-     */
     loader.loadSearch = function(term, dataset, callback) {
         term = term.toLowerCase();
 		var cache = true;
         // build query
-        var url = loader.SERVICE + '?c=geodia&q=' + escape(term) + '* NOT item_type:(image OR period)&max=999&auth=http&cache='+cache+'&callback=';
+        var url = loader.SERVICE + 'imagesearch.json?c=geodia&q=' + escape(term) + '* item_type:image&max=999&auth=http&cache='+cache+'&callback=';
         loader.url = url;
         loader.load(dataset, callback);
     };
+	*/
     
     /*
     loader.load = function(dataset, callback) {
