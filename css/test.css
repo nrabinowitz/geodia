@@ -189,6 +189,9 @@ div.toggler_right div.east{
 	overflow-y:auto;
 	width:319px;
 }
+ul.site_list li{
+	list-style:none;
+}
 ul.site_list li:hover{
 	color:#23238E;
 	cursor:pointer;
@@ -206,7 +209,58 @@ ul.site_list a.state-indicator{
 	height:16px;
 	width:16px;
 }
-
+div.search_box{
+	display:block;
+	margin-top:3px;
+	width:319px;
+	border-bottom:1px solid #C2CAD1;
+}
+div.search_box input{
+	display:block;
+	position:relative;
+	margin-left:auto;
+	margin-right:auto;
+	border:1px solid black;
+}
+#search_image_button{
+	margin-top:3px;
+	cursor:pointer;
+	margin-bottom:3px;
+}
+#search_image_text{
+	width:275px;
+}
+ul.search_results{
+	width:319px;
+	height:94%;
+	overflow-y:auto;
+}
+ul.search_results li{
+	text-align:center;
+	border-bottom:1px solid #C2CAD1;
+	padding-left:2px;
+	padding-right:2px;
+	padding-bottom:4px;
+}
+ul.search_results li h1{
+	font-size:.9em;
+}
+ul.search_results li p{
+	font-size:.8em;	
+}
+ul.search_results li p.description{
+	font-size:.7em;	
+}
+ul.search_results li img{
+	max-width:300px;
+	cursor:pointer;
+}
+ul.search_results li h1{
+	cursor:pointer;
+}
+ul.search_results li h1:hover{
+	color:gray;
+}
 
 
 
@@ -218,11 +272,12 @@ ul.site_list a.state-indicator{
 
 
 #site_periods_content{
-	overflow-y:auto;
-	overflow-x:hidden;
 	width:319px;
 }
 ul.site_periods{
+	overflow-y:auto;
+	overflow-x:hidden;
+	height:96%;
 	border-top:1px solid #C2CAD1;
 }
 ul.site_periods li.site_period{
