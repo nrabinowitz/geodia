@@ -68,7 +68,6 @@ Geodia.controller = new function() {
             ds.options.items = [];
         }
         
-		console.log(options);
         /** The associated TimeMap object */
         this.tm = TimeMap.init({
             mapId: options.mapId,
