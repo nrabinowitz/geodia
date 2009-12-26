@@ -64,27 +64,19 @@ TimeMap.loaders.dase = function() {
         loader.load(dataset, callback);
     };
 
-	loader.loadSearch = function(q,dataset,callback){
-		var cache = false;
-		loader.url = loader.SERVICE + 'sites.json?c=geodia&q='+escape(q)+'&max=999&auth=http&cache='+cache+'&callback=';
-		loader.load(dataset,callback);
-	}
-    /*
+    
     /**
      * Retrieve a query with a search term
      * 
-     * @param {String} term             Term to search on
+     * @param {String} q                Query to search on
      * @param {TimeMapDataset} dataset  Dataset to load data into
      * @param {Function} callback       Function to call once data is loaded
-    loader.loadSearch = function(term, dataset, callback) {
-        term = term.toLowerCase();
-		var cache = true;
-        // build query
-        var url = loader.SERVICE + 'imagesearch.json?c=geodia&q=' + escape(term) + '* item_type:image&max=999&auth=http&cache='+cache+'&callback=';
-        loader.url = url;
-        loader.load(dataset, callback);
-    };
-	*/
+     */
+	loader.loadSearch = function(q, dataset, callback) {
+		var cache = false;
+		loader.url = loader.SERVICE + 'sites.json?c=geodia&q='+escape(q)+'&max=999&auth=http&cache='+cache+'&callback=';
+		loader.load(dataset,callback);
+	};
     
     /*
     loader.load = function(dataset, callback) {
@@ -100,7 +92,8 @@ TimeMap.loaders.dase = function() {
             callback();
             console.timeEnd("callback");
         });
-    }; */
+    };
+    */
     
     return loader;
 };
