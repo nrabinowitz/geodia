@@ -61,7 +61,7 @@ Geodia.controller = new function() {
         // look for supplied data parameters
         if (options.dataUrl) {
             ds.type = "json_string";
-            ds.options.url = options.dataUrl
+            ds.options.url = options.dataUrl;
         }
         else {
             ds.type = "basic";
@@ -218,22 +218,14 @@ Geodia.controller = new function() {
         });
         
         // add listener to filter timeline
-	    GEvent.addListener(tm.map, 'moveend', function(){
+	    GEvent.addListener(tm.map, 'moveend', function() {
 			//set rank
 			controller.rankItems(tm);
             // filter timeline events
-		    tm.filter("timeline");
-            // layout timeline again, if periods are loaded
-		    var loadedPeriods = false;
 		    tm.eachItem(function(item) {
-                if (item.periods && !loadedPeriods){
-                    loadedPeriods = true;
-                }
                 item.event._trackNum = null;
 		    });
-		    if (loadedPeriods){
-			    tm.timeline.layout();
-		    }
+		    tm.filter("timeline");
 	    });
     };
 	
@@ -334,9 +326,7 @@ Geodia.controller = new function() {
         // initialize data, adding periods
         this.initData(tm); 
         // scroll appropriately
-        var d = tm.eventSource.getEarliestDate();
-        tm.timeline.getBand(0).setCenterVisibleDate(d);
-        tm.timeline.layout();
+        tm.scrollToDate("earliest", true);
     };
     
     /**
@@ -619,74 +609,76 @@ Geodia.PeriodEventPainter = function(params) {
         evt._trackNum = track;
         
         // loop through periods
-        var iterator = evt.item.periods.getAllIterator();
-        while (iterator.hasNext()) {
-            var period = iterator.next(), text, tooltip;
-            if (period.term) {
-                // add period to text
-                text = evt.getText() + (period.term ? ' (' + period.term +')' : '');
-                // make tooltip
-                tooltip = evt.getText() + " \n Period: " + period.term + 
-                    " (" + period.start + " - " + period.end + ")" +
-                    " \n Culture: " + period.culture;
-            } 
-            else {
-                text = evt.getText();
-                tooltip = false;
-            }
-            // get dates from period
-            startDate = period.getStart();
-            endDate = period.getEnd();
-            startPixel = Math.round(this._band.dateToPixelOffset(startDate));
-            endPixel = Math.round(this._band.dateToPixelOffset(endDate));
-            // get color from period theme
-            var color = period.theme.eventColor;
-            
-            // make tape
-            var tapeElmtData = this._paintEventTape(evt, track, startPixel, endPixel, color, 100, metrics, theme, 0);
-            // add stripe if necessary
-            if (period.stripe) {
-                tapeElmtData.elmt.style.background = color + ' url(' + period.stripe + ')';
-            }
-            // add tooltip
-            if (tooltip) tapeElmtData.elmt.title = tooltip;
-            var els = [tapeElmtData];
-            
-            // fix scope for handler
-            var self = this, clickHandler;
-            (function(p, e) {
-                clickHandler = function(elmt, domEvt, target) {
-                        e.item.currPeriod = p;
-                    return self._onClickDurationEvent(tapeElmtData.elmt, domEvt, evt);
-                };
-            })(period, evt);
-            SimileAjax.DOM.registerEvent(tapeElmtData.elmt, "mousedown", clickHandler);
-            
-            // make label
-            if (this._params.showText !== false) {
-                var labelDivClassName = this._getLabelDivClassName(evt);
-                var labelSize = this._frc.computeSize(text, labelDivClassName);
-                var labelLeft = startPixel;
-                var labelRight = labelLeft + labelSize.width;
+        if (evt.item.periods) {
+            var iterator = evt.item.periods.getAllIterator();
+            while (iterator.hasNext()) {
+                var period = iterator.next(), text, tooltip;
+                if (period.term) {
+                    // add period to text
+                    text = evt.getText() + (period.term ? ' (' + period.term +')' : '');
+                    // make tooltip
+                    tooltip = evt.getText() + " \n Period: " + period.term + 
+                        " (" + period.start + " - " + period.end + ")" +
+                        " \n Culture: " + period.culture;
+                } 
+                else {
+                    text = evt.getText();
+                    tooltip = false;
+                }
+                // get dates from period
+                startDate = period.getStart();
+                endDate = period.getEnd();
+                startPixel = Math.round(this._band.dateToPixelOffset(startDate));
+                endPixel = Math.round(this._band.dateToPixelOffset(endDate));
+                // get color from period theme
+                var color = period.theme.eventColor;
                 
-                var rightEdge = Math.max(labelRight, endPixel);
-                var labelTop = Math.round(metrics.trackOffset + track * metrics.trackIncrement);
-                var labelElmtData = this._paintEventLabel(evt, text, labelLeft, labelTop, labelSize.width, labelSize.height, theme, labelDivClassName, highlightIndex);
-                // more legible over stripe
+                // make tape
+                var tapeElmtData = this._paintEventTape(evt, track, startPixel, endPixel, color, 100, metrics, theme, 0);
+                // add stripe if necessary
                 if (period.stripe) {
-                    labelElmtData.elmt.style.background = color;
+                    tapeElmtData.elmt.style.background = color + ' url(' + period.stripe + ')';
                 }
                 // add tooltip
-                if (tooltip) labelElmtData.elmt.title = tooltip;
-                els.push(labelElmtData.elmt);
-                SimileAjax.DOM.registerEvent(labelElmtData.elmt, "mousedown", clickHandler);
+                if (tooltip) tapeElmtData.elmt.title = tooltip;
+                var els = [tapeElmtData];
+                
+                // fix scope for handler
+                var self = this, clickHandler;
+                (function(p, e) {
+                    clickHandler = function(elmt, domEvt, target) {
+                            e.item.currPeriod = p;
+                        return self._onClickDurationEvent(tapeElmtData.elmt, domEvt, evt);
+                    };
+                })(period, evt);
+                SimileAjax.DOM.registerEvent(tapeElmtData.elmt, "mousedown", clickHandler);
+                
+                // make label
+                if (this._params.showText !== false) {
+                    var labelDivClassName = this._getLabelDivClassName(evt);
+                    var labelSize = this._frc.computeSize(text, labelDivClassName);
+                    var labelLeft = startPixel;
+                    var labelRight = labelLeft + labelSize.width;
+                    
+                    var rightEdge = Math.max(labelRight, endPixel);
+                    var labelTop = Math.round(metrics.trackOffset + track * metrics.trackIncrement);
+                    var labelElmtData = this._paintEventLabel(evt, text, labelLeft, labelTop, labelSize.width, labelSize.height, theme, labelDivClassName, highlightIndex);
+                    // more legible over stripe
+                    if (period.stripe) {
+                        labelElmtData.elmt.style.background = color;
+                    }
+                    // add tooltip
+                    if (tooltip) labelElmtData.elmt.title = tooltip;
+                    els.push(labelElmtData.elmt);
+                    SimileAjax.DOM.registerEvent(labelElmtData.elmt, "mousedown", clickHandler);
+                }
+                
+                var hDiv = this._createHighlightDiv(highlightIndex, tapeElmtData, theme, evt);
+                if (hDiv != null) {els.push(hDiv);}
+                this._fireEventPaintListeners('paintedEvent', evt, els);
+                
+                this._eventIdToElmt[evt.getID()] = tapeElmtData.elmt;
             }
-            
-            var hDiv = this._createHighlightDiv(highlightIndex, tapeElmtData, theme, evt);
-            if (hDiv != null) {els.push(hDiv);}
-            this._fireEventPaintListeners('paintedEvent', evt, els);
-            
-            this._eventIdToElmt[evt.getID()] = tapeElmtData.elmt;
         }
     };
 
