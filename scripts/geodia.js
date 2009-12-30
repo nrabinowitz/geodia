@@ -104,7 +104,7 @@ Geodia.controller = new function() {
         var ds = this.tm.datasets.sites,
             ui = this.ui;
         // clear any other async loads
-        TimeMap.loaders.jsonp.cancelAll();
+        TimeMap.loaders.cancelAll();
         // clear dataset and site list
         this.clear();
         // start load animation
