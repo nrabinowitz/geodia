@@ -61,59 +61,25 @@ Geodia.Interface = function(controller, options) {
 	    $('div.toggler').click(function() {
 			ui.toggleSidebar();
 	    });
-
-		//set action for previous button - BETA
-		$('#prev_search').click(function(){
-			var prev = controller.Queue[controller.Queue.length - 2];
-			if(prev){
-				var fn = prev[0];
-				var temp_args = $.makeArray(prev[1]);
-				temp_args.push(true);
-				if( typeof fn == 'function'){
-					if(typeof prev[1][1] != 'function' && prev[1].length > 1){
-						controller.ui.searchPanel.cultures = [];
-						controller.ui.searchPanel.clearPanel();
-						controller.ui.sideBar.display('search');
-						//Need to fill in check boxes
-						var cultures = prev[1][0];
-						var regions = prev[1][1];
-						var term = prev[1][2];
-						for(var i in cultures){
-							$('input[name="'+cultures[i]+'"]').attr('checked',true);
-                			controller.ui.searchPanel.cultures.push(cultures[i]);			
-						}
-						for(var k in regions){
-							$('input[name="'+regions[k]+'"]').attr('checked',true);
-						}
-						$('#search_text').val(term);
-                		controller.ui.searchPanel.cultures.push(term);			
-					}
-					else if(typeof prev[1][1] == 'function'){
-						controller.ui.imageSearch.clear();
-						controller.ui.sideBar.display('search_image');
-						$('#search_image_text').val(prev[1][0]);
-					}
-					else{
-						controller.ui.searchPanel.clearPanel();
-					}
-					//calls one of the search methods with previously searched arguments
-			   		fn.apply(controller,temp_args);
-				}
-			}
-			if(controller.Queue.length > 1){
-				controller.Queue.pop();
-			}
+		
+		//faq modal
+		$('#faq-content').dialog({autoOpen:false,modal:true,height:600,width:800,title:'FAQ'});
+		$('#faq').click(function(){
+		//broken since we dont have faq info
+	//		$('#faq-content').dialog('open');
 			return false;
 		});
 
-
+		$('#login-window').dialog({autoOpen:false,modal:true,height:600,width:800,title:'LOGIN'});
+		$('#login').click(function(){
+			$('#login-window').dialog('open');
+			return false;
+		});
 
 		//setup tab action
 		$('#tabs a').click(function(){
 			var id = $(this).attr('id');
-			if(id != 'prev_search'){
-				controller.ui.sideBar.display(id);
-			}
+			controller.ui.sideBar.display(id);
 			return false;
 		});
 
@@ -145,10 +111,11 @@ Geodia.Interface = function(controller, options) {
         var dw = $(window).width();
         var sbw = options.sbopen ? 350 : 30;
         var adw = 0;// options.adminopen ? 350 : 20;
-        var hh = 32;
+		var fh = $('#footer').height();
+        var hh = $('#hborder').height();
         // size timemap and sidebar
-	    var sbh = dh - hh;
-		$('#timemap').height(dh - hh);
+	    var sbh = dh - hh - 2;
+		$('#timemap').height(dh - hh - fh - 2);
         $('#mapcontainer').width(dw - sbw + 30);
 		$('#sbcontent').height(sbh);
         $('#sidebar').height(sbh)
@@ -207,6 +174,8 @@ Geodia.Interface = function(controller, options) {
     this.getEventLimit = function() {
         return this.opts.eventLimit;
     };
+
+	this.ImageClicked = null;
     
     /**
      * Show or hide loading animation
@@ -220,7 +189,7 @@ Geodia.Interface = function(controller, options) {
             if ($("#" + loaderId).length < 1) {
                 // add loader image
                 $('<img id="' + loaderId + '" src="images/ajax-loader.gif"/>')
-                    .insertAfter($('#login'));
+                    .appendTo($('#header'));
             }
         }
         else {
@@ -265,17 +234,23 @@ Geodia.SiteList = function(ui, controller) {
      */
     this.add = function(item) {
 		item.state = 1;
-        var site_list = $('ul.site_list');
-        var site = $('<li>' + item.getTitle() + '<a href="" class="state-indicator" ></a></li>')
-            // add item reference
-            .data('site', item)
-            // add click handler
-            .click(function() {
-				controller.toggleState(item); 
-				GEvent.trigger(controller.tm.map,'moveend');
-            })
-            // add to site list
-            .appendTo(site_list);
+        var site_list = $('table.site_list');
+		
+        var site = $('<tr class="site_row"><td><a href="" class="site_name">' + item.getTitle() + '</a></td><td><input class="auto" name="'+item.opts.serial_number+'_state" type="radio" checked="checked"/></td><td><input name="'+item.opts.serial_number+'_state" class="show" type="radio"/></td><td><input name="'+item.opts.serial_number+'_state" class="hide" type="radio"/></td></tr>').data('site',item).appendTo(site_list);
+
+		$(site).find('input').click(function(){
+			controller.toggleState(item,$(this).attr('class'));
+			GEvent.trigger(controller.tm.map,'moveend');
+		
+		});
+
+		//when name clicked go to site page and appropriate period
+		$(site).find('a.site_name').click(function(){
+			item.getImages(function(site,new_site){
+				ui.sitePeriods.loadImageViewer(site,site.getPeriod(),new_site);
+			});
+			return false;
+		});
     };
 	$('a.state-indicator').live('click',function(){
 		return false
@@ -285,25 +260,15 @@ Geodia.SiteList = function(ui, controller) {
 	};
 
 	this.update = function(){
-		$('ul.site_list li').each(function(i,n){
+		$('table.site_list tr.site_row').each(function(i,n){
 			var item = $(n).data('site');
-			var $indicator = $(n).children('a.state-indicator').attr('class','');
-			if(item.state == 0){
-				$indicator.attr('class','ui-icon ui-icon-circle-close state-indicator');
-			}
-			else if(item.state == 1){
-				$indicator.attr('class','state-indicator');
-			}
-			else{
-				$indicator.attr('class','ui-icon ui-icon-circle-plus state-indicator');
-			}
-			//change color if it is displayed on timeline and add to top
 			if(item.show && item.rank <= controller.ui.getEventLimit()){
 			   	$(n).addClass('visible');
-				$(n).prependTo($('ul.site_list'));
+			   	$(n).find('a.site_name').addClass('visible');
 			}
 			else{
 				$(n).removeClass('visible');
+			   	$(n).find('a.site_name').removeClass('visible');
 			}
 		});
 	};
@@ -312,7 +277,7 @@ Geodia.SiteList = function(ui, controller) {
      * Clear site list
      */
     this.clear = function() {
-        $('ul.site_list').empty();
+        $('table.site_list tr.site_row').remove();
 		this.updateSiteCount(0);
     };
 };
@@ -358,7 +323,7 @@ Geodia.SearchPanel = function(ui, controller) {
 		var cultures = [], regions = [];
 		controller.ui.searchPanel.cultures = [];
         $('#culture_list')
-            .children('input[type="checkbox"]:checked')
+            .find('input[type="checkbox"]:checked')
             .each(function(i, el){
 				var temp = $(el).val();
                 cultures.push(temp);			
@@ -416,8 +381,6 @@ Geodia.ImageSearch = function(ui, controller) {
     /** The associated controller */
     this.controller = controller;
 
-    
-
 	this.search = function(){
 		var tab = $('#search_image_content').children('.search_results');
 		$(tab).empty();
@@ -448,16 +411,16 @@ Geodia.ImageSearch = function(ui, controller) {
 			});
 			html += '<div class="spacer"></div>';
 			var imgs = $(tab).append(html);
-			$(imgs).children('li').children('h1').click(function(e){
+			$(imgs).children('li').click(function(e){
 					controller.ui.searchPanel.clearPanel();
-					$(this).parent().siblings('li').css('background-color','transparent');
-					$(this).parent().css('background-color','#C2CAD1')
-					var site = $(this).text();
-					var region = $(this).siblings('.region').text();
+					$(this).siblings('li').css('background-color','transparent');
+					$(this).css('background-color','#C2CAD1')
+					var site = $(this).children('h1').text();
+					var region = $(this).children('.region').text();
+					ui.ImageClicked = UrlToSernum($(this).children('a').attr('href'));
         			controller.loadSearch('site_name:'+site+' AND region:'+region);
 					return false;
 			});
-			$(imgs).children('li').children('a').lightBox();
 		});
 	};
 
@@ -520,11 +483,13 @@ Geodia.SitePeriods = function(ui, controller) {
 		var sb_ul = $('ul.site_periods');
 		var period_list = '';
     	var li_sum_heights = 0;
+		var period_array = new Array();
 		if(new_site || $('h1.site_title').attr('id') != site.opts.serial_number){
         	$('h1.site_title').text(site.opts.title).attr('id',site.opts.serial_number);
 			$(sb_ul).empty();
 		   	while(p.hasNext()){
 				var period = p.next();
+				period_array.push(period);
 				var li = '<li class="site_period';
 				if(period.term+period.start == current_period.term+current_period.start){
 					li += ' selected';
@@ -532,16 +497,18 @@ Geodia.SitePeriods = function(ui, controller) {
 				li += '">';
 				if(images[period.serial]){
 					var image_set = images[period.serial].images;
+					var image_length = 0;
 					var ul_size = '';
 					if(image_set){
-						ul_size = image_set.length * 110;
+						image_length = image_set.length;
+						ul_size = image_length * 114;
 					}
 					else{
 						ul_size = 0;
 					}		
 					li += '<p class="period_name"><span>'+period.term+'</span> '+period.start+' - '+period.end+'</p><ul class="thumbs" style="width:'+ul_size+'px" >';
 					for(var i in image_set){
-   		    			li += '<li><a class="thumb" href="'+image_set[i]['large']+'"><img src="'+image_set[i]['thumb']+'"/></a><div style="display:none" class="metadata">';
+   		    			li += '<li><a class="thumb" href="'+image_set[i]['large']+'"><img title="'+image_set[i].metadata['title']+'" src="'+image_set[i]['thumb']+'"/></a><div style="display:none" class="metadata">';
 						if(image_set[i].metadata['title'] != undefined){
 							li += '<p><span>Title: </span>'+image_set[i].metadata['title']+'</p>';
 						}
@@ -558,7 +525,7 @@ Geodia.SitePeriods = function(ui, controller) {
 						*/
 						li += '</div></li>';
 					}
-					li += '</ul><div class="slider"></div>';
+					li += '</ul><div class="arrows"><a href="" class="prev ui-icon ui-icon ui-icon-circle-arrow-w"></a><a href="" class="next ui-icon ui-icon ui-icon-circle-arrow-e"></a></div><div class="slider"></div><p style="float:none" class="image-counter"><span>1</span> of '+image_length+'</p>';
 				}
 				li += '<div class="spacer"></div></li>';
 				period_list += li;
@@ -572,14 +539,35 @@ Geodia.SitePeriods = function(ui, controller) {
 				}
 				else if(size > 0 && size <= 2){
 					$(n).find('div.slider').remove();
+					$(n).find('a.next').remove();
+					$(n).find('a.prev').remove();
+					$(n).find('p.image-counter').remove();
 				}
 				else if(size == 0){
 					$(n).find('ul.thumbs').css('height','20px');
 					$(n).find('div.slider').remove();
+					$(n).find('a.next').remove();
+					$(n).find('a.prev').remove();
+					$(n).find('p.image-counter').remove();
 				}
 		        if ($(n).hasClass('selected')){
         	   	    $('ul.site_periods').animate({scrollTop:li_sum_heights + 10},'slow');
 	       	    }
+				else if(ui.ImageClicked){
+					//if ImageClicked global var set, then it was a request made from an image search.
+					//we will want to scroll down to the appropriate period
+					$(n).find('a.thumb').each(function(l,m){
+						if($(m).attr('href').indexOf(ui.ImageClicked) != -1){
+						
+							$(n).addClass('selected');
+        	   	    		$('ul.site_periods').animate({scrollTop:li_sum_heights + 10},'slow');
+							var ev = period_array[i];
+    	                    controller.tm.timeline.getBand(0).setCenterVisibleDate(ev.getStart());
+        	                controller.tm.timeline.layout();
+							ui.ImageClicked = null;
+						}
+					});	
+				}
     	        li_sum_heights += $(n).height() + 20; 
 			});
 
@@ -592,30 +580,69 @@ Geodia.SitePeriods = function(ui, controller) {
 				}
 				else{
 	                $(n).removeClass('selected');
+					$(n).find('p.period_name').text().
         	    	li_sum_heights += $(n).height() + 20; 
     	        }
 	        });
 		}
 	};
 
-
 	function addSlider(appended, size){
-		var max = size * 100;
+		var max = size * 114;
+		var val = 0;
 		var viewport = $(appended).find('ul.thumbs');
-						$(appended).find('div.slider').slider({
-							step: 100,
+		var nextBtn = $(appended).find('a.next');
+		var prevBtn = $(appended).find('a.prev');
+		var imgNum = $(appended).find('p.image-counter').children('span');
+		var counter = 1;
+		var timer = null; //timer variable
+		var slider =   $(appended).find('div.slider');
+		var slide_viewport = $(slider).siblings('ul.thumbs');
+		
+						$(slider).slider({
+							step: 114,
 							min: 0,
 							max: max,
 							stop: function(event,ui){
-								var slide_viewport = $(this).siblings('ul.thumbs');
 			                    $(slide_viewport).animate({
 				                    left: '-'+ui.value+'px',
 				                    y: 0,
 									queue: false
 			                    },500,'swing');
+								val = ui.value;
+								$(imgNum).text(Math.floor(ui.value / 114) + 1);
 							}
 						});
 
+		var moveNext = function(){
+			if(val + 114 < max){
+				val = val + 114;
+			                    $(slide_viewport).animate({
+				                    left: '-'+val+'px',
+				                    y: 0,
+									queue: false
+			                    },0,'swing');
+				timer = setTimeout(moveNext,100);
+				$(slider).slider('option','value',val);
+				$(imgNum).text(Math.floor(val / 114) + 1);
+			}
+		}
+		var movePrevious = function(){
+			if(val - 114 >= 0){
+				val = val - 114;
+			                    $(slide_viewport).animate({
+				                    left: '-'+val+'px',
+				                    y: 0,
+									queue: false
+			                    },0,'swing');
+				timer = setTimeout(movePrevious,100);
+				//setter
+				$(slider).slider('option','value',val);
+				$(imgNum).text(Math.floor(val / 114) + 1);
+			}
+		}
+		$(nextBtn).mousedown(function(){if(!timer){moveNext();}}).mouseup(function(){clearTimeout(timer);timer= null;}).click(function(){return false;});
+		$(prevBtn).mousedown(function(){if(!timer){movePrevious();}}).mouseup(function(){clearTimeout(timer);timer=null;}).click(function(){return false;});
 	}
 
 };
@@ -692,3 +719,9 @@ Geodia.SideBar = function(ui, controller) {
 	};
 
 };
+
+
+//turns url to serial number
+function UrlToSernum(url){
+	return url.substring(url.lastIndexOf('/') + 1,url.lastIndexOf('.'));
+}
