@@ -67,7 +67,7 @@
 
 			//Stuart- check for FAT cookie. (not the best solution since having a FAT cookie does not mean authorization)
 			if(document.cookie.indexOf('FC=') == -1 || document.cookie.indexOf('FC=NONE') != -1){
-				$('#login-window').dialog('open');
+			//	$('#login-window').dialog('open');
 				return;
 			}
 
