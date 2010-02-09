@@ -22,23 +22,21 @@
     <script src="scripts/collection.js" type="text/javascript"></script>
     <script src="scripts/interface.js" type="text/javascript"></script>
     <script type="text/javascript">
-
-$(document).ready(function() {
-    // initialize
-    Geodia.controller.init();
-});
-
+		$(document).ready(function() {
+		    // initialize
+		    Geodia.controller.init();
+		});
     </script>
   </head>
 
   <body onunload="GUnload();">
     <div id="hborder">
         <div id="header">
-            <h1>Geodia</h1>
-            <div id="login"><a href='http://www.laits.utexas.edu/geodia' target="_blank">Log in</a></div>
+			<a href="test.html"><img src="images/geodia_logo.png"/></a>
+			<div class="header-links"><a id='login' href=''><h1>UT LOG IN</h1><span>access large images</span></a></div>
+			<div class="header-links"><a id="faq" href=''><h1>FAQ</h1><span>how to use GEODIA</span></a></div>
 				
 			<ul id='tabs'>
-				<!--	<a href="" style='margin-top:2px;padding-right:5px;float:left' id="prev_search" >&#60-</a> -->
 				<li class="selected"><a class="selected" id='search' href="">Search</a></li>
 				<li><a id='search_image' href="">Image Search</a></li>
 				<li><a id='site_list' href=''>Site List <span id='site_count'></span></a></li>
@@ -46,6 +44,24 @@ $(document).ready(function() {
 			</ul>
 		 </div>
 	</div>
+
+	<div id="faq-content">
+			<div>
+				<div class='faq-section-title'><h1>About Geodia</h1></div>
+					<p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
+			</div>
+			<div>
+				<div class='faq-section-title'><h1>Navigating the Site</h1> </div>
+				<p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
+			</div>
+	</div>
+	<div id="login-window">
+		<iframe src="http://www.laits.utexas.edu/geodia" >
+		</iframe>
+	</div>
+
+
+
 
     <div id="sidebar">
 
@@ -58,25 +74,16 @@ $(document).ready(function() {
 			<div id='search_content' class='tab_content selected'>
 				<div id='culture_list'>
 					<h1>Culture</h1>
-					<input type='checkbox' name='akkadian&#47;assyrian' value="akkadian&#47;assyrian"/><label style='color:#5ACFCF' for='akkadian&#47;assyrian'>Akkadian/Assyrian</label>
-					<br />
-					<input type='checkbox' name='celtic' value="celtic"/><label style='color:#FFD700' for='celtic'>Celtic</label>
-					<br />
-					<input type='checkbox' name='egyptian' value="egyptian"/><label style='color:#E14E9D' for='egyptian'>Egyptian</label>
-					<br />
-					<input type='checkbox' name='etruscan' value="etruscan"/><label style='color:#9E7151' for='etruscan'>Etruscan</label>
-					<br />
-					<input type='checkbox' name='greek' value="greek"/><label style='color:#19CF54' for='greek'>Greek</label>
-					<br />
-					<input type='checkbox' name='levantine' value="levantine"/><label style='color:#8E67FD' for='levantine'>Levantine</label>
-					<br />
-					<input type='checkbox' name='persian' value="persian"/><label style='color:#5A7ACF' for='persian'>Persian</label>
-					<br />
-					<input type='checkbox' name='punic' value="punic"/><label style='color:#215E21' for='punic'>Punic</label>
-					<br />
-					<input type='checkbox' name='roman' value="roman"/><label style='color:#FE766A' for='roman'>Roman</label>
-					<br />
-					<input type='checkbox' name='sumerian&#47;babylonian' value="sumerian&#47;babylonian"/><label style='color:#FF9900' for='sumerian&#47;babylonian'>Sumerian/Babylonian</label>
+					<div class="akkadian"><input type='checkbox' name='akkadian&#47;assyrian' value="akkadian&#47;assyrian"/><label for='akkadian&#47;assyrian'>Akkadian/Assyrian</label></div>
+					<div class="celtic"><input type='checkbox' name='celtic' value="celtic"/><label for='celtic'>Celtic</label></div>
+					<div class="egyptian"><input type='checkbox' name='egyptian' value="egyptian"/><label for='egyptian'>Egyptian</label></div>
+					<div class="etruscan"><input type='checkbox' name='etruscan' value="etruscan"/><label for='etruscan'>Etruscan</label></div>
+					<div class="greek"><input type='checkbox' name='greek' value="greek"/><label for='greek'>Greek</label></div>
+					<div class="levantine"><input type='checkbox' name='levantine' value="levantine"/><label for='levantine'>Levantine</label></div>
+					<div class="persian"><input type='checkbox' name='persian' value="persian"/><label for='persian'>Persian</label></div>
+					<div class="punic"><input type='checkbox' name='punic' value="punic"/><label for='punic'>Punic</label></div>
+					<div class="roman"><input type='checkbox' name='roman' value="roman"/><label for='roman'>Roman</label></div>
+					<div class="sumerian"><input type='checkbox' name='sumerian&#47;babylonian' value="sumerian&#47;babylonian"/><label for='sumerian&#47;babylonian'>Sumerian/Babylonian</label></div>
 				</div>
 				<br />
 				<div id="region_list">
@@ -113,7 +120,9 @@ $(document).ready(function() {
 			</div>
 	
 			<div id='site_list_content' class='tab_content'>
-				<ul class='site_list'></ul>
+				<table class='site_list'>
+					<tr><th>Name</th><th>Auto</th><th>Show</th><th>Hide</th></tr>
+				</table>
 			</div>
 			<div id="site_periods_content" class="tab_content">
 				<h1 class='site_title '></h1>
@@ -128,7 +137,7 @@ $(document).ready(function() {
 			</div>
 
         </div>
-    </div>
+	</div>
     <div id="timemap">
         <div id="timelinecontainer">
           <div id="timeline"></div>
@@ -137,5 +146,6 @@ $(document).ready(function() {
           <div id="map"></div>
         </div>
     </div>
+	<div id="footer"><p><a href="http://www.laits.utexas.edu">UT Liberal Arts Instructional Technology Services</a> | <a href="http://code.google.com/p/timemap/">timemap.js by Nick Rabinowitz</a></p></div>
   </body>
 </html>
