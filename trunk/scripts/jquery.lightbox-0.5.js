@@ -64,6 +64,13 @@
 		 * @param object jQueryMatchedObj The jQuery object with all elements matched
 		 */
 		function _start(objClicked,jQueryMatchedObj) {
+
+			//Stuart- check for FAT cookie. (not the best solution since having a FAT cookie does not mean authorization)
+			if(document.cookie.indexOf('FC=') == -1 || document.cookie.indexOf('FC=NONE') != -1){
+				$('#login-window').dialog('open');
+				return;
+			}
+
 			// Hime some elements to avoid conflict with overlay in IE. These elements appear above the overlay.
 			$('embed, object, select').css({ 'visibility' : 'hidden' });
 			// Call the function to create the markup structure; style some elements; assign events in some elements.
@@ -159,7 +166,7 @@
 				var arrPageSizes = ___getPageSize();
 				// Style overlay and show it
 				$('#jquery-overlay').css({
-					width:		arrPageSizes[0] * .8,
+					width:		arrPageSizes[0],
 					height:		arrPageSizes[1] * .8
 				});
 				// Get page scroll
@@ -231,6 +238,11 @@
 			var intDiffW = intCurrentWidth - intWidth;
 			var intDiffH = intCurrentHeight - intHeight;
 			// Perfomance the effect
+			 
+			//Stuart- descriptions were hard to read if image was too thin.
+			if(intWidth < 600){
+				intWidth = 600;
+			}
 			$('#lightbox-container-image-box').animate({ width: intWidth, height: intHeight },settings.containerResizeSpeed,function() { _show_image(); });
 			if ( ( intDiffW < 1 ) && ( intDiffH < 1 ) ) {
 				if ( $.browser.msie ) {
@@ -239,7 +251,8 @@
 					___pause(100);	
 				}
 			} 
-			$('#lightbox-container-image-data-box').css({ width: intImageWidth });
+			// Stuart - old = $('#lightbox-container-image-data-box').css({ width: intImageWidth });
+			$('#lightbox-container-image-data-box').css({ width: intWidth - 20 });
 			$('#lightbox-nav-btnPrev,#lightbox-nav-btnNext').css({ height: intImageHeight + (settings.containerBorderSize * 2) });
 		};
 		/**

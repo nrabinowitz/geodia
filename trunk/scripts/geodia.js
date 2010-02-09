@@ -117,29 +117,18 @@ Geodia.controller = new function() {
     this.postload = function() {
         // wrap in a try to ignore cancelled calls
         try {
-            controller.resetTimeMap();
+           	controller.resetTimeMap();
         } catch(e) {}
         controller.ui.toggleLoading(false);
     };
 
-	this.Queue = [];
-
-	this.addToSetQueue = function(fn,args){
-		controller.Queue.push(arguments);
-	};
-
-
-    
     /**
      * Load data by facet selection
      *
      * @param {String[]} cultures       List of cultures for the query
      * @param {String[]} regions        List of regions for the query
      */
-    this.loadFacets = function(cultures, regions, term, skip){
-		if(!skip){
-			this.addToSetQueue(this.loadFacets,arguments);
-		}
+    this.loadFacets = function(cultures, regions, term){
         if (cultures.length + regions.length > 0 || term) {
             this.preloadCleanUp();
             // load data
@@ -150,13 +139,10 @@ Geodia.controller = new function() {
         }
 	};
 
-    this.loadSearch = function(q,skip){
-		if(!skip){
-			this.addToSetQueue(this.loadSearch,arguments);
-		}
+    this.loadSearch = function(q){
 		if(q){
             this.preloadCleanUp();
-	        this.loader.loadSearch(q, this.tm.datasets.sites, this.postload);
+        	this.loader.loadSearch(q, this.tm.datasets.sites, this.postload);
 		}
 		else{
 			this.clear();
@@ -165,10 +151,7 @@ Geodia.controller = new function() {
 
     
 	//search for images
-    this.searchImages = function(term,callback,skip){
-		if(!skip){
-			this.addToSetQueue(this.searchImages,arguments);
-		}
+    this.searchImages = function(term,callback){
         this.ui.toggleLoading(true);
 		var cache = true;
 		var url = 'http://www.laits.utexas.edu/geodia/modules/geodia/dataset/imagesearch.json?q='+escape(term)+'&auth=http&cache='+cache+'&callback=?';
@@ -236,13 +219,40 @@ Geodia.controller = new function() {
      */
     this.initData = function(tm) {
         // set up periods as an EventIndex
-		var count = 0;
+		var site_array = new Array();
+
         tm.eachItem(function(item) {
             item.loadPeriods();
-        	controller.ui.addToSiteList(item);
-			count += 1;
+			site_array.push([item,item.getTitle()]);
         });
-		controller.ui.updateSiteCount(count);
+		//natural sort
+		site_array.sort(
+                    function (a, b){
+                    if(a[1] == undefined ){a[1] = 'zzzzz';}
+                    if(b[1] == undefined ){b[1] = 'zzzzz';}
+                    var re = /(-?[0-9\.]+)/g,
+                    x = a[1].toString().toLowerCase() || '',
+                    y = b[1].toString().toLowerCase() || '',
+                    nC = String.fromCharCode(0),
+                    xN = x.replace( re, nC + '$1' + nC ).split(nC),
+                    yN = y.replace( re, nC + '$1' + nC ).split(nC),
+                    xD = (new Date(x)).getTime(),
+                    yD = xD ? (new Date(y)).getTime() : null;
+                    if ( yD )
+                    if ( xD < yD ) return -1;
+                    else if ( xD > yD ) return 1;
+                    for( var cLoc = 0, numS = Math.max(xN.length, yN.length); cLoc < numS; cLoc++ ) {
+                    oFxNcL = parseFloat(xN[cLoc]) || xN[cLoc];
+                    oFyNcL = parseFloat(yN[cLoc]) || yN[cLoc];
+                    if (oFxNcL < oFyNcL) return -1;
+                    else if (oFxNcL > oFyNcL) return 1;
+                    }
+                    return 0;
+        });
+		for(var i in site_array){
+        	controller.ui.addToSiteList(site_array[i][0]);
+		}
+		controller.ui.updateSiteCount(site_array.length);
         // set initial rank
         // XXX: this involves another iteration - might be better consolidated
         controller.rankItems(tm);
@@ -310,9 +320,14 @@ Geodia.controller = new function() {
 		controller.ui.siteList.update();
     };
 
-	this.toggleState = function(item){
-		item.state += 1;
-		if(item.state == 3){
+	this.toggleState = function(item,state){
+		if(state == 'auto'){
+			item.state = 1;
+		}
+		else if(state == 'show'){
+			item.state = 2;
+		}
+		else{
 			item.state = 0;
 		}
 	};
@@ -325,8 +340,26 @@ Geodia.controller = new function() {
         var tm = this.tm;
         // initialize data, adding periods
         this.initData(tm); 
-        // scroll appropriately
-        tm.scrollToDate("earliest", true);
+		var ImageClicked = this.ui.ImageClicked;
+
+		if(ImageClicked != null){
+			var count = 0;
+        	tm.eachItem(function(item) {
+				if(count == 0){
+					item.getImages(function(site,new_site){
+				        // scroll appropriately
+						Geodia.controller.ui.sitePeriods.loadImageViewer(site,new Array(),new_site);
+					});
+					count +=1;
+				}
+			});
+		}
+		else{
+	        // scroll appropriately
+        	var d = tm.eventSource.getEarliestDate();
+    	    tm.timeline.getBand(0).setCenterVisibleDate(d);
+	        tm.timeline.layout();
+		}
     };
     
     /**

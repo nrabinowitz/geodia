@@ -64,36 +64,11 @@ TimeMap.loaders.dase = function() {
         loader.load(dataset, callback);
     };
 
-    
-    /**
-     * Retrieve a query with a search term
-     * 
-     * @param {String} q                Query to search on
-     * @param {TimeMapDataset} dataset  Dataset to load data into
-     * @param {Function} callback       Function to call once data is loaded
-     */
-	loader.loadSearch = function(q, dataset, callback) {
+	loader.loadSearch = function(q,dataset,callback){
 		var cache = false;
 		loader.url = loader.SERVICE + 'sites.json?c=geodia&q='+escape(q)+'&max=999&auth=http&cache='+cache+'&callback=';
 		loader.load(dataset,callback);
-	};
-    
-    /*
-    loader.load = function(dataset, callback) {
-        // get items
-        TimeMap.loaders.jsonp.read(this.url, function(result) {
-            // load
-            var items = loader.preload(result);
-            console.time("loading");
-            dataset.loadItems(items, loader.transform);
-            console.timeEnd("loading");
-            // callback
-            console.time("callback");
-            callback();
-            console.timeEnd("callback");
-        });
-    };
-    */
+	}
     
     return loader;
 };
