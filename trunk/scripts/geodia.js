@@ -17,27 +17,9 @@ Geodia.controller = new function() {
     
     /**
      * Initialize the controller, including the timemap and interface
-     *
-     * @param {Object} options      Container for optional params (probably to load state)
      */
     this.init = function(options) {
-        
-        // set defaults
-        var defaults = {
-            mapId: "map",
-			mapZoom: 4,
-			mapCenter: new GLatLng(6,6),
-            timelineId: "timeline",
-            mapType: "satellite",
-        };
-        
-        /** 
-         * Container for optional settings passed in the "options" parameter
-         * @type Object
-         */
-        this.opts = options = TimeMap.util.merge(options, defaults);
-        
-        // initialize interface
+        options = options || {};
         
         /** The associated interface **/
         var ui = this.ui = new Geodia.Interface(this, options);
@@ -68,15 +50,15 @@ Geodia.controller = new function() {
             ds.options.items = [];
         }
         
-        /** The associated TimeMap object */
-        this.tm = TimeMap.init({
-            mapId: options.mapId,
-            timelineId: options.timelineId,
+        // set up the config object
+        var config = {
+            mapId: "map",
+            timelineId: "timeline",
             options: {
-				mapZoom: options.mapZoom,
-				mapCenter: options.mapCenter,
+				mapZoom: 4,
+				mapCenter: new GLatLng(6,6),
                 openInfoWindow: TimeMapItem.openPeriodWindow,
-                mapType: options.mapType
+                mapType: "satellite"
             },
             scrollTo: options.scrollTo,
             datasets: [ ds ],
@@ -85,6 +67,7 @@ Geodia.controller = new function() {
                 ui.init();
                 controller.initFilters(tm);
                 controller.initData(tm);
+                tm.initState();
                 // check and correct overzoom
                 GEvent.addListener(tm.datasets.sites, 'itemsloaded', function() {
                     maxZoom = 17;
@@ -93,7 +76,11 @@ Geodia.controller = new function() {
                     }
                 });
             }
-        });
+        };
+        TimeMap.state.setConfigFromUrl(config);
+        
+        /** The associated TimeMap object */
+        this.tm = TimeMap.init(config);
         
     };
     
