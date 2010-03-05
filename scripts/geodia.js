@@ -37,7 +37,8 @@ Geodia.controller = new function() {
             title: "Sites",
             options: {
                 theme: 'red',
-                classicTape: true
+                classicTape: true,
+                eventIconPath: "images/"
             }
         };
         // look for supplied data parameters
