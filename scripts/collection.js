@@ -65,7 +65,7 @@ TimeMap.loaders.dase = function() {
     };
 
 	loader.loadSearch = function(q,dataset,callback){
-		var cache = false;
+		var cache = true;
 		loader.url = loader.SERVICE + 'sites.json?c=geodia&q='+escape(q)+'&max=999&auth=http&cache='+cache+'&callback=';
 		loader.load(dataset,callback);
 	}
