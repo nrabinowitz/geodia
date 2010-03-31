@@ -57,7 +57,7 @@ Geodia.controller = new function() {
             timelineId: "timeline",
             options: {
 				mapZoom: 4,
-				mapCenter: new GLatLng(6,6),
+				mapCenter: new GLatLng(36.8, 17.18),
                 openInfoWindow: TimeMapItem.openPeriodWindow,
                 mapType: "satellite"
             },
