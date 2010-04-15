@@ -18,7 +18,7 @@ TimeMap.loaders.dase = function() {
 	/* TEST URL */
    	// loader.SERVICE = "http://dev.laits.utexas.edu/geodia/dase/modules/geodia";
 	/* PRODUCTION URL */
-    loader.SERVICE = "http://www.laits.utexas.edu/geodia/modules/geodia/dataset/";
+    loader.SERVICE = "http://dev.laits.utexas.edu/geodia/dase/modules/geodia/dataset/"
     
     /**
      * Retrieve a query with a list of cultures and regions
@@ -28,17 +28,24 @@ TimeMap.loaders.dase = function() {
      * @param {TimeMapDataset} dataset  Dataset to load data into
      * @param {Function} callback       Function to call once data is loaded
      */
-    loader.loadFacets = function(cultures, regions, term, dataset, callback) {
+    loader.loadFacets = function(cultures, regions, term, dataset, callback, type) {
         // build query
         var url = loader.SERVICE + 'sites.json?c=geodia&q=';
             query = "";
-			var cache = true;
+			var cache = false;
         // add cultures
         if (cultures && cultures.length > 0) {
-            query += 'parent_period:(';
+			if(type == 'site'){
+				//cultural attribute name for sites
+	            query += 'parent_period:(';
+			}
+			else{
+				//cultural attribute name on events
+	            query += 'culture:(';
+			}
             for (var x=0; x<cultures.length; x++) {
-                query += cultures[x].toLowerCase().replace('/','* OR ') + ' OR ';
-            }
+        	    query += cultures[x].toLowerCase().replace('/','* OR ') + ' OR ';
+    	    }
             query = query.substring(0,query.length - 4)+')';
         }
 		if(regions.length > 0  && cultures.length > 0){
@@ -59,7 +66,7 @@ TimeMap.loaders.dase = function() {
 			query += '(' + term.toLowerCase().replace(' or ',' OR ') + '* NOT item_type:(image OR period)) NOT note:('+term.toLowerCase().replace(' or ',' OR ')+')';
 		}
         // finish query URL
-        url += escape(query) + '&max=999&auth=http&cache='+cache+'&callback=';
+        url += escape(query) + '&type='+type+'&max=999&auth=http&cache='+cache+'&callback=';
         loader.url = url;
         loader.load(dataset, callback);
     };

@@ -115,11 +115,11 @@ Geodia.controller = new function() {
      * @param {String[]} cultures       List of cultures for the query
      * @param {String[]} regions        List of regions for the query
      */
-    this.loadFacets = function(cultures, regions, term){
+    this.loadFacets = function(cultures, regions, term, type){
         if (cultures.length + regions.length > 0 || term) {
             this.preloadCleanUp();
             // load data
-            this.loader.loadFacets(cultures, regions, term, this.tm.datasets.sites, this.postload);
+            this.loader.loadFacets(cultures, regions, term, this.tm.datasets.sites, this.postload, type);
         }
         else {
             this.clear();
@@ -260,7 +260,6 @@ Geodia.controller = new function() {
         // XXX: this involves another iteration - might be better consolidated
         controller.rankItems(tm);
         GEvent.trigger(tm.map,'moveend');
-
     };
 
     /**
@@ -318,6 +317,8 @@ Geodia.controller = new function() {
 					else{
 						item.rank += 8;
 					}
+					//makes sure anything that is marked shown is lower than all other states
+					item.rank += 1;
 				}
 				else{
 					item.rank += 999;
@@ -461,25 +462,45 @@ TimeMapItem.openPeriodWindow = function() {
     } else {
         p = this.getPeriod();
     }
-    var html = '<div class="infotitle">' + site_name + '</div>';
-    html += '<div class="infodescription"><span>Period:</span> '+p.term+' <br/><span>Start: </span>'+p.start+'<br/><span>End: </span> '+p.end+'<br/><span>Culture:</span> '+p.culture+'</div>';
-    // scroll timeline if necessary
-    var topband = this.dataset.timemap.timeline.getBand(0);
-    if (p.getStart().getTime() > topband.getMaxVisibleDate().getTime() || 
-        p.getEnd().getTime() < topband.getMinVisibleDate().getTime()) {
-        topband.setCenterVisibleDate(p.getStart());
-    }
-    // open window
-    if (this.getType() == "marker") {
-        this.placemark.openInfoWindowHtml(html);
-    } else {
-        this.map.openInfoWindowHtml(this.getInfoPoint(), html);
-    }
-    // custom functions will need to set this as well
-    this.selected = true;
-	this.getImages(function(site,new_site){
-		Geodia.controller.ui.siteDetails.loadImageViewer(site,p,new_site);
-	})
+	//check if its a site or event
+	if(!p){
+		//its an event
+    	var html = '<p>' + site_name + '</p>';
+		html += '<div class="infodescription"><p><span>Culture: </span>'+this.opts.culture+'</p>';
+		html += '<p><span>Date: </span>'+this.opts.date+'</p></div>';
+
+    	var topband = this.dataset.timemap.timeline.getBand(this.getStart());
+	    // open window
+    	if (this.getType() == "marker") {
+        	this.placemark.openInfoWindowHtml(html);
+	    } else {
+    	    this.map.openInfoWindowHtml(this.getInfoPoint(), html);
+	    }
+	    // custom functions will need to set this as well
+	    this.selected = true;
+	}
+	else{
+		//its a site
+    	var html = '<div class="infotitle">' + site_name + '</div>';
+	    html += '<div class="infodescription"><span>Period:</span> '+p.term+' <br/><span>Start: </span>'+p.start+'<br/><span>End: </span> '+p.end+'<br/><span>Culture:</span> '+p.culture+'</div>';
+	    // scroll timeline if necessary
+    	var topband = this.dataset.timemap.timeline.getBand(0);
+	    if (p.getStart().getTime() > topband.getMaxVisibleDate().getTime() || 
+    	    p.getEnd().getTime() < topband.getMinVisibleDate().getTime()) {
+        	topband.setCenterVisibleDate(p.getStart());
+	    }
+	    // open window
+    	if (this.getType() == "marker") {
+        	this.placemark.openInfoWindowHtml(html);
+	    } else {
+    	    this.map.openInfoWindowHtml(this.getInfoPoint(), html);
+	    }
+	    // custom functions will need to set this as well
+	    this.selected = true;
+		this.getImages(function(site,new_site){
+			Geodia.controller.ui.siteDetails.loadImageViewer(site,p,new_site);
+		})
+	}
 };
 TimeMapItem.prototype.getImages = function(callback){
 	//check to see if already loaded
@@ -651,6 +672,7 @@ Geodia.PeriodEventPainter = function(params) {
         this._fireEventPaintListeners('paintEnded', null, null);
     };
     
+	
     // Continue fix for long event tracks
     painter._findFreeTrack = function(event, rightEdge) {
         var trackAttribute = event.getTrackNum();
@@ -660,13 +682,20 @@ Geodia.PeriodEventPainter = function(params) {
         // normal case: find an open track
         for (var i = 0; i < this._tracks.length; i++) {
             var t = this._tracks[i];
-	            if (t < rightEdge) { // NR: Reversed to work with AllEventIterator
-       				break;
-		        }
+				if(!event.isInstant()){
+	    			if (t < rightEdge) { // NR: Reversed to work with AllEventIterator
+    		   			break;
+				    }
+				}
+				else{
+		    		if (t > rightEdge) { // SR: Reversed to work with Events
+    		   			break;
+				    }
+				}
         }
         return i;
     };
-
+	
     
     // overwrite duration painting
     painter.paintPreciseDurationEvent = function(evt, metrics, theme, highlightIndex) {
@@ -757,7 +786,51 @@ Geodia.PeriodEventPainter = function(params) {
                 this._eventIdToElmt[evt.getID()] = tapeElmtData.elmt;
             }
         }
+
     };
+painter.paintPreciseInstantEvent = function(evt, metrics, theme, highlightIndex) {
+    var doc = this._timeline.getDocument();
+
+    var text = evt.getText();
+
+    var startDate = evt.getStart();
+    var startPixel = Math.round(this._band.dateToPixelOffset(startDate));
+    var iconRightEdge = Math.round(startPixel + metrics.iconWidth / 2);
+    var iconLeftEdge = Math.round(startPixel - metrics.iconWidth / 2);
+
+    var labelDivClassName = this._getLabelDivClassName(evt);
+    var labelSize = this._frc.computeSize(text, labelDivClassName);
+    var labelLeft = iconRightEdge + theme.event.label.offsetFromLine;
+    var labelRight = labelLeft + labelSize.width;
+
+    var rightEdge = labelRight;
+    var track = this._findFreeTrack(evt, rightEdge);
+
+    var labelTop = Math.round(
+        metrics.trackOffset + track * metrics.trackIncrement +
+        metrics.trackHeight / 2 - labelSize.height / 2);
+
+    var iconElmtData = this._paintEventIcon(evt, track, iconLeftEdge, metrics, theme, 0);
+    var labelElmtData = this._paintEventLabel(evt, text, labelLeft, labelTop, labelSize.width,
+        labelSize.height, theme, labelDivClassName, highlightIndex);
+    var els = [iconElmtData.elmt, labelElmtData.elmt];
+
+    var self = this;
+    var clickHandler = function(elmt, domEvt, target) {
+        return self._onClickInstantEvent(iconElmtData.elmt, domEvt, evt);
+    };
+    SimileAjax.DOM.registerEvent(iconElmtData.elmt, "mousedown", clickHandler);
+    SimileAjax.DOM.registerEvent(labelElmtData.elmt, "mousedown", clickHandler);
+
+    var hDiv = this._createHighlightDiv(highlightIndex, iconElmtData, theme, evt);
+    if (hDiv != null) {els.push(hDiv);}
+    this._fireEventPaintListeners('paintedEvent', evt, els);
+
+
+    this._eventIdToElmt[evt.getID()] = iconElmtData.elmt;
+    this._tracks[track] = iconLeftEdge;
+};
+
 
     
     // return new painter

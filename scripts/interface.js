@@ -89,24 +89,6 @@ Geodia.Interface = function(controller, options) {
 			controller.ui.sideBar.display(id);
 			return false;
 		});
-		/*
-		//for another time..
-		$('#sidebar').draggable({axis:'x',handle:'div.toggler',
-				start:function(e,ui){
-					$(e.originalTarget).unbind('click');
-				},
-				drag:function(e,ui){
-					$('#sbcontent').width($('#sbcontent').width() +ui.position.left);
-				},
-				stop:function(e){
-					setTimeout(function(){
-					    $('div.toggler').click(function() {
-							ui.toggleSidebar();
-					    });
-					}, 300);
-
-				}});
-		*/
 
         // set up panels
         this.resizePanels();
@@ -242,8 +224,11 @@ Geodia.NavSearch = function(ui, controller) {
 		var cultures = ui.browse.cultures();
 		var regions = ui.browse.regions();
 		if(type == 'site'){
-        	controller.loadFacets(cultures, regions, text);
+        	controller.loadFacets(cultures, regions, text, type);
 		}
+		else if(type == 'event'){
+        	controller.loadFacets(cultures, regions, text, type);
+		}	
 		else{
 			//last var is start of search
     	   	controller.searchImages(cultures, regions, text, 0);
@@ -260,8 +245,11 @@ Geodia.NavSearch = function(ui, controller) {
 			var cultures = ui.browse.cultures();
 			var regions = ui.browse.regions();
 			if(type == 'site'){
-        		controller.loadFacets(cultures, regions, text);
+	        	controller.loadFacets(cultures, regions, text, type);
 			}
+			else if(type == 'event'){
+    	    	controller.loadFacets(cultures, regions, text, type);
+			}	
 			else{
     	    	controller.searchImages(cultures, regions, text, 0);
 			}
@@ -296,21 +284,33 @@ Geodia.Results = function(ui, controller) {
      */
     this.addSite = function(item) {
 		item.state = 1;
-        var site = $('<tr class="site_row"><td><a href="" class="site_name">' + item.getTitle() + '</a></td><td><input class="auto" name="'+item.opts.serial_number+'_state" type="radio" checked="checked"/></td><td><input name="'+item.opts.serial_number+'_state" class="show" type="radio"/></td><td><input name="'+item.opts.serial_number+'_state" class="hide" type="radio"/></td></tr>').data('site',item).appendTo(ui.results.$site_results);
- 
+		if(item.event.isInstant()){
+	    	var site = $('<tr class="site_row"><td><a href="" class="event_name">' + item.getTitle() + '</a></td><td><input class="auto" name="'+item.opts.serial_number+'_state" type="radio" checked="checked"/></td><td><input name="'+item.opts.serial_number+'_state" class="show" type="radio"/></td><td><input name="'+item.opts.serial_number+'_state" class="hide" type="radio"/></td></tr>').data('site',item).appendTo(ui.results.$site_results);
+		}
+		else{
+	    	var site = $('<tr class="site_row"><td><a href="" class="site_name">' + item.getTitle() + '</a></td><td><input class="auto" name="'+item.opts.serial_number+'_state" type="radio" checked="checked"/></td><td><input name="'+item.opts.serial_number+'_state" class="show" type="radio"/></td><td><input name="'+item.opts.serial_number+'_state" class="hide" type="radio"/></td></tr>').data('site',item).appendTo(ui.results.$site_results);
+
+		}
+
+
 		$(site).find('input').click(function(){
 			controller.toggleState(item,$(this).attr('class'));
 			GEvent.trigger(controller.tm.map,'moveend');
-		
 		});
  
 		//when name clicked go to site page and appropriate period
-		$(site).find('a.site_name').click(function(){
-			item.getImages(function(site,new_site){
-				ui.siteDetails.loadImageViewer(site,site.getPeriod(),new_site);
-			});
+		$(site).find('a').click(function(){
+			if($(this).hasClass("site_name")){
+				item.getImages(function(site,new_site){
+					ui.siteDetails.loadImageViewer(site,site.getPeriod(),new_site);
+				});
+			}
+			else if ($(this).hasClass("event_name")){
+				item.openInfoWindow();
+			}
 			return false;
 		});
+
     };
 	this.addImages= function(results,cultures, regions, term){
 		ui.results.$site_results.parent().hide();
@@ -367,7 +367,7 @@ Geodia.Results = function(ui, controller) {
 			}	
 			stats += '<p>'+start+' - '+shown+' of '+total+'</p>';
 
-			$('div.image_results_header').show().append(stats)
+			$('div.image_results_header').empty().show().append(stats)
 				.children('a').click(function(){
 					if(!$(this).hasClass('inactive')){
 						if($(this).hasClass('next')){

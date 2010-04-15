@@ -386,9 +386,9 @@ div.sumerian{
 	border:1px solid #6E778E;
 }
 div.site_results_container{
-	height:99%;
+	height:92%;
 	overflow-y:auto;
-	overflow-x;hidden
+	overflow-x:hidden
 }
 table.site_results {
 	width:100%;
@@ -448,7 +448,7 @@ div.image_results_header a.inactive{
 	color:gray;
 }
 ul.image_results{
-	height:94%;
+	height:92%;
 	overflow-y:auto;
 	overflow-x:hidden;
 	list-style-type:none;
