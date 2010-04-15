@@ -18,7 +18,7 @@ TimeMap.loaders.dase = function() {
 	/* TEST URL */
    	// loader.SERVICE = "http://dev.laits.utexas.edu/geodia/dase/modules/geodia";
 	/* PRODUCTION URL */
-    loader.SERVICE = "http://www.laits.utexas.edu/geodia/modules/geodia/dataset/"
+    loader.SERVICE = "http://dev.laits.utexas.edu/geodia/dase/modules/geodia/dataset/"
     
     /**
      * Retrieve a query with a list of cultures and regions
@@ -53,7 +53,12 @@ TimeMap.loaders.dase = function() {
 		}
         // add regions
         if (regions && regions.length > 0) {
-            query += 'site_region:(';
+			if(type == 'site'){
+	            query += 'site_region:(';
+			}
+			else{
+	            query += 'region:(';
+			}
             for (var x=0; x<regions.length; x++) {
                 query += regions[x].toLowerCase() + ' OR ';
             }
