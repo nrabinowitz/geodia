@@ -18,7 +18,7 @@ TimeMap.loaders.dase = function() {
 	/* TEST URL */
    	// loader.SERVICE = "http://dev.laits.utexas.edu/geodia/dase/modules/geodia";
 	/* PRODUCTION URL */
-    loader.SERVICE = "http://dev.laits.utexas.edu/geodia/dase/modules/geodia/dataset/"
+    loader.SERVICE = "http://www.laits.utexas.edu/geodia/modules/geodia/dataset/"
     
     /**
      * Retrieve a query with a list of cultures and regions
