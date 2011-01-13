@@ -15,8 +15,8 @@ TimeMap.loaders.dase = function() {
      * @type String
      */
 	/* TEST URL */
-   	loader.SERVICE = "http://dev.laits.utexas.edu/geodia/dase/modules/geodia/";
-   	loader.DASE = "http://dev.laits.utexas.edu/geodia/dase/";
+   	loader.SERVICE = "http://www.laits.utexas.edu/geodia/modules/geodia/";
+   	loader.DASE = "http://www.laits.utexas.edu/geodia/";
    	loader.SITE_ADMIN = "http://www.laits.utexas.edu/geodia/modules/geodia/";
    	loader.EVENT_ADMIN = "http://www.laits.utexas.edu/geodia/modules/events/";
 	/* PRODUCTION URL */
