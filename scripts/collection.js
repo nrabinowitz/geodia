@@ -9,78 +9,79 @@
  * @augments TimeMap.loaders.jsonp
  */
 TimeMap.loaders.dase = function() {
-    var loader = new TimeMap.loaders.jsonp({});
-    
+    var loader = new TimeMap.loaders.basic({});
     /** 
      * Base URL of the service 
      * @type String
      */
 	/* TEST URL */
-   	// loader.SERVICE = "http://dev.laits.utexas.edu/geodia/dase/modules/geodia";
+   	loader.SERVICE = "http://dev.laits.utexas.edu/geodia/dase/modules/geodia/";
+   	loader.DASE = "http://dev.laits.utexas.edu/geodia/dase/";
+   	loader.SITE_ADMIN = "http://www.laits.utexas.edu/geodia/modules/geodia/";
+   	loader.EVENT_ADMIN = "http://www.laits.utexas.edu/geodia/modules/events/";
 	/* PRODUCTION URL */
-    loader.SERVICE = "http://www.laits.utexas.edu/geodia/modules/geodia/dataset/"
-    
-    /**
-     * Retrieve a query with a list of cultures and regions
-     * 
-     * @param {String[]} cultures       List of cultures for the query
-     * @param {String[]} regions        List of regions for the query
-     * @param {TimeMapDataset} dataset  Dataset to load data into
-     * @param {Function} callback       Function to call once data is loaded
-     */
-    loader.loadFacets = function(cultures, regions, term, dataset, callback, type) {
-        // build query
-        var url = loader.SERVICE + 'sites.json?c=geodia&q=';
-            query = "";
-			var cache = false;
-        // add cultures
-        if (cultures && cultures.length > 0) {
-			if(type == 'site'){
-				//cultural attribute name for sites
-	            query += 'parent_period:(';
-			}
-			else{
-				//cultural attribute name on events
-	            query += 'culture:(';
-			}
-            for (var x=0; x<cultures.length; x++) {
-        	    query += cultures[x].toLowerCase().replace('/','* OR ') + ' OR ';
-    	    }
-            query = query.substring(0,query.length - 4)+')';
-        }
-		if(regions.length > 0  && cultures.length > 0){
-			query += ' AND ';
-		}
-        // add regions
-        if (regions && regions.length > 0) {
-			if(type == 'site'){
-	            query += 'site_region:(';
-			}
-			else{
-	            query += 'region:(';
-			}
-            for (var x=0; x<regions.length; x++) {
-                query += regions[x].toLowerCase() + ' OR ';
-            }
-            query = query.substring(0,query.length - 4)+')';
-        }
-		if(term){
-			if(regions.length > 0 || cultures.length > 0){
-				query += ' OR ';
-			}
-			query += '(' + term.toLowerCase().replace(' or ',' OR ') + '* NOT item_type:(image OR period)) NOT note:('+term.toLowerCase().replace(' or ',' OR ')+')';
-		}
-        // finish query URL
-        url += escape(query) + '&type='+type+'&max=999&auth=http&cache='+cache+'&callback=';
-        loader.url = url;
-        loader.load(dataset, callback);
-    };
+    //loader.PROD = "http://www.laits.utexas.edu/geodia/modules/geodia/dataset/"
+	loader.CACHE = false;
 
-	loader.loadSearch = function(q,dataset,callback){
-		var cache = true;
-		loader.url = loader.SERVICE + 'sites.json?c=geodia&q='+escape(q)+'&max=999&auth=http&cache='+cache+'&callback=';
-		loader.load(dataset,callback);
+	loader.createParamString = function(params){
+		if(!params.terms.length){
+			var term = 'term='; 
+		} else{
+			var term = 'term='+params.terms; 
+		}
+		if(!params.cultures.length){
+			var cultures = 'cultures=';
+		} else{
+			var cultures = 'cultures='+params.cultures.toString();
+		}
+		if(!params.regions.length){
+			var regions = 'regions=';
+
+		} else{
+			var regions = 'regions='+params.regions.toString();
+		}
+		if(!params.removed.length){
+			var removed = 'removed=';
+
+		} else{
+			var removed = 'removed='+params.removed.toString();
+		}
+		if(!params.pleiades_uri.length){
+			var pleiades_uri = 'pleiades_uri=';
+
+		} else{
+			var pleiades_uri = 'pleiades_uri='+params.pleiades_uri;
+		}
+		if(params.site_period == ''){
+			var site_period = 'site_period=';
+		} else if(params.item_type == 'site'){
+			var site_period = 'site_period='+params.site_period;
+		}
+		return cultures+'&'+regions+'&'+term+'&'+removed+'&'+site_period+'&'+pleiades_uri+'&item_type='+params.item_type+'&auth=http';
 	}
+
+	loader.search = function(controller){
+		var params = controller.tm.getState();
+		var uid = params.cultures.toString()+'_'+params.regions.toString()+'_'+params.terms+'_'+params.site_period+'_'+params.pleiades_uri+'_'+params.item_type;
+		if(uid.replace(params.item_type,'') != "_____"){
+			cache = Geodia.getCache(uid);
+			if(!cache){
+				if(params.pleiades_uri){
+					controller.tm.opts.pleiades_uri = '';
+				}
+				var param_string = loader.createParamString(params);
+				var url = loader.SERVICE+'search.json?'+param_string+'&callback=?';
+				$.getJSON(url,function(json){
+					Geodia.addCache(uid,json);
+					controller.loadJson([uid,json]);
+				});
+			} else{
+				controller.loadJson(cache);
+			}
+		} else{
+			controller.loadJson([uid,[]]);
+		}
+	};
     
     return loader;
 };

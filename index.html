@@ -1,0 +1,250 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+		<title>Geodia</title>
+		<link href="/dev_stuart/geodia/css/text.css" type="text/css" rel="stylesheet"/>
+		<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.1/build/reset/reset-min.css">
+		<link rel="stylesheet" type="text/css" href="/dev_stuart/geodia/css/jquery-ui-1.7.2.custom.css">
+		<link href="/dev_stuart/geodia/css/test.css" type="text/css" rel="stylesheet"/>
+		<link href="/dev_stuart/geodia/scripts/fancybox/fancybox/jquery.fancybox-1.3.1.css" type="text/css" rel="stylesheet"/>
+		<!--
+		<script src="http://maps.google.com/maps?file=api&v=3&key=ABQIAAAANDLDHNJLMPK3-FZ6hUwlJxTa8vJl8-9D9njxRQkbcS8z9M2_gRRchiRdpDf4DzGpr17EEkORASTRrA" type="text/javascript"></script>
+		-->
+		<script src="http://maps.google.com/maps?file=api&v=2&key=ABQIAAAASI0kCI-azC8RgbOZzWc3VRQ09nMKx4wc9yApgnti-FWlQ-OxzBRyehFJHqUJzmxTPati72nIRX2qnA" type="text/javascript"></script>
+
+
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js" type="text/javascript"></script>
+		<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.2/jquery-ui.min.js" type="text/javascript"></script>
+		<script type="text/javascript" src="http://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.min.js"></script>
+		<script src="/dev_stuart/geodia/scripts/fancybox/fancybox/jquery.fancybox-1.3.1.js" type="text/javascript"></script>
+		<script src="/dev_stuart/geodia/scripts/ImagesLoad.js" type="text/javascript"></script>
+		<script type="text/javascript" src="/dev_stuart/geodia/scripts/timemap.1.6/lib/timeline-2.3.0.js"></script>  
+		<script src="/dev_stuart/geodia/scripts/timemap.1.6/timemap_full.pack.js" type="text/javascript"></script>
+		<script src="/dev_stuart/geodia/scripts/geodia.js" type="text/javascript"></script>
+		<script src="/dev_stuart/geodia/scripts/collection.js" type="text/javascript"></script>
+		<script src="/dev_stuart/geodia/scripts/interface.js" type="text/javascript"></script>
+		<script type="text/javascript">
+			$(document).ready(function() {
+				Geodia.controller.init();
+			});
+		</script>
+		<script type="text/javascript">
+			var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+			document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+			</script>
+			<script type="text/javascript">
+				try {
+					var pageTracker = _gat._getTracker("UA-13098417-2");
+					pageTracker._trackPageview();
+				} catch(err) {}
+		</script>
+</head>
+
+<body onunload="GUnload();">
+	<div id="hborder">
+		<div id="header">
+			<a href="index.html"><img src="images/new_geodia_logo_lg_LessGlobe2.png"/></a> 
+			<div class="header-links"><a id='login' href='http://dev.laits.utexas.edu/geodia/dase/modules/uteid/index?target=http://dev.laits.utexas.edu/dev_stuart/geodia/index.html'><h1>UT LOG IN</h1><span>access large images</span></a></div>
+			<div class="header-links"><a href='overview.html'><h1>OVERVIEW</h1><span>list of all sites included</span></a></div>
+			<div class="header-links"><a href='http://geodiaforum.blogspot.com/'><h1>GEODIA BLOG</h1><span>updates and feedback</span></a></div>
+			<div class="header-links faq-link"><a id="faq" href='faq.html'><h1>FAQ</h1><span>how to use GEODIA</span></a></div>
+		</div>
+	</div>
+
+	<div id="sidebar">
+		<div id='sidebar_header'>
+			<div class='toggler_right toggler ui-resizable-handle'>
+				<div class="east"></div>
+				<div class="east"></div>
+			</div>
+			<ul id='tabs'>
+				<li class="selected" id="site_tab"><a href='' title="Site Tab"><img src="images/new_icons/new_sites3_white.png"/></a><span class="count"></span></li>
+				<li id='image_tab'><a  href='' title="Image Tab"><img src="images/new_icons/new_camera3_blue.png"/></a><span class="count"></span></li>
+				<li id='event_tab'><a  href='' title="Event Tab"><img src="images/new_icons/new_events3_blue.png"/></a><span class="count"></span></li>
+			</ul>
+		</div>
+
+		<div id="sidebar_content">
+			<div id='site_content' class='tab_content selected'>
+				<ul class="tab_nav clearfix">
+					<li class="selected"><a href="#sites_browse" class="browse">Browse</a></li>
+					<li><a href="#sites_search" class="search">Search</a></li>
+					<li><a href="#sites_results" class="results">Results</a></li>
+					<li><a href="#sites_details" class="details">Details</a></li>
+				</ul>
+				<div class="tab_nav_content">
+					<div class="visible content_browse" id='sites_browse'>
+						<form method="GET" action="" class="browse_form">
+							<div class="">
+								<div class='culture_list'>
+									<h1>Culture</h1>
+									<div class="akkadian"><input type='checkbox' name='akkadian/assyrian' value="akkadian/assyrian" id="akkadian&#47;assyrian_s"/><label for='akkadian&#47;assyrian_s'>Akkadian/Assyrian</label></div>
+									<div class="celtic"><input type='checkbox' name='celtic' value="celtic" id="celtic_s"/><label for='celtic_s'>Celtic</label></div>
+									<div class="egyptian"><input type='checkbox' name='egyptian' value="egyptian" id="egyptian_s"/><label for='egyptian_s'>Egyptian</label></div>
+									<div class="etruscan"><input type='checkbox' name='etruscan' value="etruscan" id="etruscan_s"/><label for='etruscan_s'>Etruscan</label></div>
+									<div class="greek"><input type='checkbox' name='greek' value="greek" id="greek_s"/><label for='greek_s'>Greek</label></div>
+									<div class="levantine"><input type='checkbox' name='levantine' value="levantine" id="levantine_s"/><label for='levantine_s'>Levantine</label></div>
+									<div class="persian"><input type='checkbox' name='persian' value="persian" id="persian_s"/><label for='persian_s'>Persian</label></div>
+									<div class="punic"><input type='checkbox' name='punic' value="punic" id="punic_s"/><label for='punic_s'>Punic</label></div>
+									<div class="roman"><input type='checkbox' name='roman' value="roman" id="roman_s"/><label for='roman_s'>Roman</label></div>
+									<div class="sumerian"><input type='checkbox' name='sumerian&#47;babylonian' value="sumerian&#47;babylonian" id="sumerian&#47;babylonian_s"/><label for='sumerian&#47;babylonian_s'>Sumerian/Babylonian</label></div>
+								</div>
+								<br />
+								<div class="region_list">
+									<h1>Region</h1>
+									<input type='checkbox' name='afghanistan' value="afghanistan" id="afghanistan_s"/><label for='afghanistan_s'>Afghanistan</label>
+									<input type='checkbox' name='anatolia' value="anatolia" id="anatolia_s"/><label for='anatolia_s'>Anatolia</label>
+									<input type='checkbox' name='black_sea' value="black_sea" id="black_sea_s"/><label for='black_sea_s'>Black Sea</label>
+									<input type='checkbox' name='britain/germany' value="britain/germany" id="britain_germany_s"/><label for='britain_germany_s'>Britain/Germany</label>
+									<input type='checkbox' name='egypt' value="egypt" id="egypt_s"/><label for='egypt_s'>Egypt</label>
+									<input type='checkbox' name='greece_the_aegean' value="greece_the_aegean" id="greece_the_aegean_s"/><label for='greece_the_aegean_s'>Greece/The Aegean</label>
+									<input type='checkbox' name='iran' value="iran" id="iran_s"/><label for='iran_s'>Iran</label>
+									<input type='checkbox' name='italy_western_mediterranean' value="italy_western_mediterranean" id="italy_western_mediterranean_s"/><label for='italy_western_mediterranean_s'>Italy/Western Mediterranean</label>
+									<input type='checkbox' name='north_africa' value="north_africa" id="north_africa_s"/><label for='north_africa_s'>North Africa</label>
+									<input type='checkbox' name='northern_mesopotamia' value="northern_mesopotamia" id="northern_mesopotamia_s"/><label for='northern_mesopotamia_s'>Northern Mesopotamia</label>
+									<input type='checkbox' name='southern_mesopotamia' value="southern_mesopotamia" id="southern_mesopotamia_s"/><label for='southern_mesopotamia_s'>Southern Mesopotamia</label>
+									<input type='checkbox' name='the_adriatic' value="the_adriatic" id="the_adriatic_s"/><label for='the_adriatic_s'>The Adriatic</label>
+									<input type='checkbox' name='the_levant' value="the_levant" id="the_levant_s"/><label for='the_levant_s'>The Levant</label>
+								</div>
+							</div>
+						</form>
+					</div>
+					<div class="content_search" id='sites_search'>
+						<div class="nav_search_input">
+							<form method="GET" action="" class="search_form">
+								<input class="search_text" name="search_text" type="text" />
+								<input class="search_submit" type="submit" value="Search"/>
+								<ul class="search_terms"></ul>
+							</form>
+						</div>
+					</div>
+					<div class="content_results" id='sites_results'>
+						<div class="subtab_menu">
+							<h3><a href="" class="result_kml">Google Earth Download</a></h3>
+							<button class="clear_results">Clear</button>
+							<button class="result_link">Link</button>
+							<input class="result_input" type="text" value=""/>
+						</div>
+						<div class="list_header"><p>Hide</p><p>Show</p></div>
+						<ul></ul>
+					</div>
+					<div id='sites_details' class="content_details">
+					</div>
+				</div>
+			</div> <!-- close site contents tab -->
+
+			<div id='image_content' class='tab_content'>
+				<ul class="tab_nav clearfix">
+					<li class="selected"><a href="#images_results" class="results">Search</a></li>
+				</ul>
+				<div class="tab_nav_content">
+					<div class="visible content_results" id='images_results'>
+						<form method="GET" action="" class="search_form">
+							<div class="nav_search_input">
+								<input class="search_text" name="search_text" type="text" />
+								<input class="search_submit" type="submit" value="Search"/>
+								<ul class="search_terms"></ul>
+							</div>
+						</form>
+						<div class="subtab_menu">
+							<button class="clear_results">Clear</button>
+							<button class="result_link">Link</button>
+							<input class="result_input" type="text" value=""/>
+						</div>
+						<ul class="image_results"></ul>
+
+					</div>
+				</div>
+			</div> <!-- close images conent tab -->
+
+			<div id='event_content' class='tab_content'>
+				<ul class="tab_nav clearfix">
+					<li class="selected"><a href="#events_browse" class="browse">Browse</a></li>
+					<li><a href="#events_search" class="search">Search</a></li>
+					<li><a href="#events_results" class="results">Results</a></li>
+					<li><a href="#events_details" class="details">Details</a></li> 
+				</ul>
+				<div class="tab_nav_content">
+					<div class="visible content_browse" id='events_browse'>
+						<form method="GET" action="" class="browse_form">
+							<div class="">
+								<div class='culture_list'>
+									<h1>Culture</h1>
+									<div class="akkadian"><input type='checkbox' name='akkadian&#47;assyrian' value="akkadian&#47;assyrian" id="akkadian&#47;assyrian_e"/><label for='akkadian&#47;assyrian_e'>Akkadian/Assyrian</label></div>
+									<div class="celtic"><input type='checkbox' name='celtic' value="celtic" id="celtic_e"/><label for='celtic_e'>Celtic</label></div>
+									<div class="egyptian"><input type='checkbox' name='egyptian' value="egyptian" id="egyptian_e"/><label for='egyptian_e'>Egyptian</label></div>
+									<div class="etruscan"><input type='checkbox' name='etruscan' value="etruscan" id="etruscan_e"/><label for='etruscan_e'>Etruscan</label></div>
+									<div class="greek"><input type='checkbox' name='greek' value="greek" id="greek_e"/><label for='greek_e'>Greek</label></div>
+									<div class="levantine"><input type='checkbox' name='levantine' value="levantine" id="levantine_e"/><label for='levantine_e'>Levantine</label></div>
+									<div class="persian"><input type='checkbox' name='persian' value="persian" id="persian_e"/><label for='persian_e'>Persian</label></div>
+									<div class="punic"><input type='checkbox' name='punic' value="punic" id="punic_e"/><label for='punic_e'>Punic</label></div>
+									<div class="roman"><input type='checkbox' name='roman' value="roman" id="roman_e"/><label for='roman_e'>Roman</label></div>
+									<div class="sumerian"><input type='checkbox' name='sumerian&#47;babylonian' value="sumerian&#47;babylonian" id="sumerian&#47;babylonian_e"/><label for='sumerian&#47;babylonian_e'>Sumerian/Babylonian</label></div>
+								</div>
+								<br />
+								<div class="region_list">
+									<h1>Region</h1>
+									<input type='checkbox' name='afghanistan' value="afghanistan" id="afghanistan_e"/><label for='afghanistan_e'>Afghanistan</label>
+									<input type='checkbox' name='anatolia' value="anatolia" id="anatolia_e"/><label for='anatolia_e'>Anatolia</label>
+									<input type='checkbox' name='black_sea' value="black_sea" id="black_sea_e"/><label for='black_sea_e'>Black Sea</label>
+									<input type='checkbox' name='britain/germany' value="britain/germany" id="britain_germany_e"/><label for='britain_germany_e'>Britain/Germany</label>
+									<input type='checkbox' name='egypt' value="egypt" id="egypt_e"/><label for='egypt_e'>Egypt</label>
+									<input type='checkbox' name='greece_the_aegean' value="greece_the_aegean" id="greece_the_aegean_e"/><label for='greece_the_aegean_e'>Greece/The Aegean</label>
+									<input type='checkbox' name='iran' value="iran" id="iran_e"/><label for='iran_e'>Iran</label>
+									<input type='checkbox' name='italy_western_mediterranean' value="italy_western_mediterranean" id="italy_western_mediterranean_e"/><label for='italy_western_mediterranean_e'>Italy/Western Mediterranean</label>
+									<input type='checkbox' name='north_africa' value="north_africa" id="north_africa_e"/><label for='north_africa_e'>North Africa</label>
+									<input type='checkbox' name='northern_mesopotamia' value="northern_mesopotamia" id="northern_mesopotamia_e"/><label for='northern_mesopotamia_e'>Northern Mesopotamia</label>
+									<input type='checkbox' name='southern_mesopotamia' value="southern_mesopotamia" id="southern_mesopotamia_e"/><label for='southern_mesopotamia_e'>Southern Mesopotamia</label>
+									<input type='checkbox' name='the_adriatic' value="the_adriatic" id="the_adriatic_e"/><label for='the_adriatic_e'>The Adriatic</label>
+									<input type='checkbox' name='the_levant' value="the_levant" id="the_levant_e"/><label for='the_levant_e'>The Levant</label>
+								</div>
+							</div>
+						</form>
+					</div>
+					<div class="content_search" id='events_search'>
+						<div class="nav_search_input">
+							<form method="GET" action="" class="search_form">
+								<input class="search_text" name="search_text" type="text" />
+								<input class="search_submit" type="submit" value="Search"/>
+								<ul class="search_terms"></ul>
+							</form>
+						</div>
+					</div>
+					<div class="content_results" id='events_results'>
+						<div class="subtab_menu">
+							<h3><a href="" class="result_kml">Google Earth Download</a></h3>
+							<button class="clear_results">Clear</button>
+							<button class="result_link">Link</button>
+							<input class="result_input" type="text" value=""/>
+						</div>
+						<ul>
+						</ul>
+					</div>
+					<div id='events_details' class='content_details'></div>
+				</div>
+			</div> <!-- close events content tab -->
+		</div>
+	</div>
+	<div class="spacer"></div>
+	<div id="timemap">
+		<div id="loading">
+			<img src="images/loading.gif"/>
+		</div>
+		<div id="timelinecontainer">
+			<div id="timeline"></div>
+		</div>
+		<div id="mapcontainer">
+			<div id="map"></div>
+		</div>
+	</div>
+	<div id="footer">
+		<p>
+		<a href="http://www.laits.utexas.edu">UT Liberal Arts Instructional Technology Services</a> | 
+		<a href="http://code.google.com/p/timemap/">timemap.js by Nick Rabinowitz</a> | 
+		<a href='credits.html'>Credits</a> 
+		</p>
+	</div>
+</body>
+		</html>

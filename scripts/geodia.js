@@ -32,72 +32,77 @@ Geodia.controller = new function() {
         // initialize timemap
         
         // set up the dataset options
-        var ds = {
-            id: "sites",
+        var ds = [{
+            id: "site",
             title: "Sites",
+			type: 'basic',
             options: {
                 theme: 'red',
                 classicTape: true,
-                eventIconPath: "images/"
+                eventIconPath: "images/",
+				items: []
             }
-        };
-        // look for supplied data parameters
-        if (options.dataUrl) {
-            ds.type = "json_string";
-            ds.options.url = options.dataUrl;
-        }
-        else {
-            ds.type = "basic";
-            ds.options.items = [];
-        }
+        },{
+            id: "event",
+            title: "Events",
+			type: 'basic',
+            options: {
+                theme: 'blue',
+                classicTape: true,
+                eventIconPath: "images/",
+				items: []
+            }
+		}];
         
         // set up the config object
         var config = {
             mapId: "map",
             timelineId: "timeline",
             options: {
+				pleiades_uri: '',
 				mapZoom: 4,
 				mapCenter: new GLatLng(36.8, 17.18),
                 openInfoWindow: TimeMapItem.openPeriodWindow,
+				centerOnItems: false,
                 mapType: "satellite"
             },
             scrollTo: options.scrollTo,
-            datasets: [ ds ],
+            datasets: ds,
             bands: Geodia.bands,
             dataLoadedFunction: function(tm) {
-                ui.init();
-                controller.initFilters(tm);
-                controller.initData(tm);
-                tm.initState();
-                // check and correct overzoom
-                GEvent.addListener(tm.datasets.sites, 'itemsloaded', function() {
-                    maxZoom = 17;
-                    if (tm.map.getZoom() > maxZoom) {
-                        tm.map.setZoom(maxZoom);
-                    }
-                });
+				controller.initData(tm);
+            	ui.init(tm);
+				controller.initFilters(tm);
+
+				tm.setStateFromUrl();
+				var params = tm.getState();
+
+				window.onhashchange = function() {
+					tm.setStateFromUrl();
+					controller.loadSearch(); 
+				};
+
+				if(params.pleiades_uri != ''){
+					ui.clearBrowse(ui.visibleTab.ele);
+					ui.clearSearch(ui.visibleTab.ele);
+					ui.visibleTab.removed = [];
+					controller.tm = tm;
+					ui.sidebar.updateGeodia();
+
+				} else if(params.cultures.length > 0 || params.regions.length > 0 || params.terms.length > 0 || params.site_period != ''){
+					controller.tm = tm;
+					controller.loadSearch(); 
+				}
             }
         };
-        TimeMap.state.setConfigFromUrl(config);
+
+		//had to remove selected state
+		delete TimeMap.state.params.selected;
+		TimeMap.state.setConfigFromUrl(config);
         /** The associated TimeMap object */
         this.tm = TimeMap.init(config);
-        
     };
-    
-    /**
-     * Clean up before loading
-     */
-    this.preloadCleanUp = function() {
-        var ds = this.tm.datasets.sites,
-            ui = this.ui;
-        // clear any other async loads
-        TimeMap.loaders.cancelAll();
-        // clear dataset and site list
-        this.clear();
-        // start load animation
-        ui.toggleLoading(true);
-    };
-    
+
     /**
      * Callback after loading
      */
@@ -105,57 +110,52 @@ Geodia.controller = new function() {
         // wrap in a try to ignore cancelled calls
         try {
            	controller.resetTimeMap();
-        } catch(e) {}
-        controller.ui.toggleLoading(false);
+        } catch(e) {};
+		controller.ui.loading(false);
     };
 
-    /**
-     * Load data by facet selection
-     *
-     * @param {String[]} cultures       List of cultures for the query
-     * @param {String[]} regions        List of regions for the query
-     */
-    this.loadFacets = function(cultures, regions, term, type){
-        if (cultures.length + regions.length > 0 || term) {
-            this.preloadCleanUp();
-            // load data
-            this.loader.loadFacets(cultures, regions, term, this.tm.datasets.sites, this.postload, type);
-        }
-        else {
-            this.clear();
-        }
-	};
+	this.currentUID = '';
 
-    this.loadSearch = function(q){
-		if(q){
-            this.preloadCleanUp();
-        	this.loader.loadSearch(q, this.tm.datasets.sites, this.postload);
+	this.loadJson = function(json){
+		this.currentUID = json[0];
+		var params = this.tm.getState();
+		var tab = controller.ui[params.item_type];
+		if(tab.item_type != 'image'){
+			this.tm.datasets[params.item_type].clear();
+			this.loader.data = json[1];
+			this.loader.load(this.tm.datasets[params.item_type],this.postload);
+		}else{
+			tab.load(json[0],json[1]);
+			controller.ui.loading(false);
 		}
-		else{
-			this.clear();
+	};
+	this.loadSidebar = function(tm){
+		if(this.currentUID != ''){
+			var tab = controller.ui.visibleTab;
+			tab.load(this.currentUID,tm.datasets[tab.item_type]);
 		}
 	}
-
-    
-	//search for images
-    this.searchImages = function(cultures, regions, term, start){
-        this.ui.toggleLoading(true);
-		var cache = true;
-		this.clear();
-
-		//creates search query 
-		q_cultures = cultures.toString().replace(/,/g,' OR ').replace(/\//g,' OR ');
-		q_regions = regions.toString().replace(/,/g,' OR ');
-		query = '('+q_cultures+') AND ('+q_regions+') AND ('+term+')';
-		query = query.replace(/ AND \(\)/g,'').replace(/\(\) AND /g,'').replace(/ /g,'%20');
-
-		var url = 'http://www.laits.utexas.edu/geodia/modules/geodia/dataset/imagesearch.json?q='+escape(query)+'&start='+start+'&auth=http&cache='+cache+'&callback=?';
-		$.getJSON(url,function(resp){
-        	controller.ui.toggleLoading(false);
-			controller.ui.results.addImages(resp, cultures, regions, term);
-		});
+	this.loadSearch = function(){
+        // clear any other async loads
+        TimeMap.loaders.cancelAll();
+		controller.ui.updateLink(window.location.href);
+		controller.ui.loading(true);
+		this.loader.search(this);
 	};
 
+    this.initData = function(tm) {
+        tm.eachItem(function(item) {
+			if(!item.event.isInstant()){
+	            item.loadPeriods();
+			}
+			else{
+				item.addEventTheme();		
+			}
+        });
+		this.loadSidebar(tm);
+		//checkresize to make sure gmap has the right dimesions for its bounds
+		this.checkResize(tm);
+    };
 
     
     /**
@@ -166,32 +166,35 @@ Geodia.controller = new function() {
     this.initFilters = function(tm) {
         // add culture filter chain
         tm.addFilterChain("culture",
-            // true condition: change marker icon
-            function(item) {
-				if(!item.event.isInstant()){
-            	    var p = item.getPeriod();
-        	        if (p) {
-    	                item.setPlacemarkTheme(p.theme);
-	                }
+		// true condition: change marker icon
+		function(item) {
+			if(!item.event.isInstant()){
+				var p = item.getPeriod();
+				if (p) {
+					item.setPlacemarkTheme(p.theme);
 				}
-            },
-            // false condition: do nothing
-            function(item) { }
-        );
+			}
+		},
+		// false condition: do nothing
+		function(item) { }
+		);
         // filter: change icon if visible
         tm.addFilter("culture", function(item) {
-            return item.placemarkVisible;
+			return item.placemarkVisible;
         });
         // add listener for filter chain
         tm.timeline.getBand(0).addOnScrollListener(function() {
             tm.filter("culture");
         });
         
-        // filter timeline events according to rank
         tm.addFilter("timeline", function(item) {
-            var limit = controller.getEventLimit();
-            return item.show && ("rank" in item) && item.rank <= limit; 
-        });
+			item.state = ("rank" in item) && item.rank !== -1;
+			if('toggleState' in item){
+				item.toggleState();
+			}
+			return item.state;
+        })
+
         // filter map placemarks so that hidden events are hidden
         tm.addFilter("map", function(item) {
             return item.eventVisible;
@@ -199,260 +202,105 @@ Geodia.controller = new function() {
         
         // add listener to filter timeline
 	    GEvent.addListener(tm.map, 'moveend', function() {
-			//set rank
-			controller.rankItems(tm);
+            controller.rankItems(tm);
             // filter timeline events
-		    tm.eachItem(function(item) {
-                item.event._trackNum = null;
-		    });
 		    tm.filter("timeline");
 	    });
     };
-	
-	/**
-     * Initialize timemap data once loaded
-     *
-     * @param {TimeMap} tm      TimeMap to initialize
-     */
-    this.initData = function(tm) {
-        // set up periods as an EventIndex
-		var site_array = new Array();
-        tm.eachItem(function(item) {
-			if(!item.event.isInstant()){
-	            item.loadPeriods();
-			}
-			else{
-				item.addEventTheme();		
-			}
-			site_array.push([item,item.getTitle()]);
-        });
-		//natural sort
-		site_array.sort(
-                    function (a, b){
-                    if(a[1] == undefined ){a[1] = 'zzzzz';}
-                    if(b[1] == undefined ){b[1] = 'zzzzz';}
-                    var re = /(-?[0-9\.]+)/g,
-                    x = a[1].toString().toLowerCase() || '',
-                    y = b[1].toString().toLowerCase() || '',
-                    nC = String.fromCharCode(0),
-                    xN = x.replace( re, nC + '$1' + nC ).split(nC),
-                    yN = y.replace( re, nC + '$1' + nC ).split(nC),
-                    xD = (new Date(x)).getTime(),
-                    yD = xD ? (new Date(y)).getTime() : null;
-                    if ( yD )
-                    if ( xD < yD ) return -1;
-                    else if ( xD > yD ) return 1;
-                    for( var cLoc = 0, numS = Math.max(xN.length, yN.length); cLoc < numS; cLoc++ ) {
-                    oFxNcL = parseFloat(xN[cLoc]) || xN[cLoc];
-                    oFyNcL = parseFloat(yN[cLoc]) || yN[cLoc];
-                    if (oFxNcL < oFyNcL) return -1;
-                    else if (oFxNcL > oFyNcL) return 1;
-                    }
-                    return 0;
-        });
 
-		controller.ui.results.$site_results.parent().show();
-		for(var i in site_array){
-        	controller.ui.addToSiteList(site_array[i][0]);
+
+    this.resetTimeMap = function() { 
+        var tm = this.tm;
+        // initialize data, adding periods
+        this.initData(tm); 
+		// scroll appropriately
+		if(tm.getState().date.getFullYear() >= 1900){
+			var d = tm.eventSource.getEarliestDate();
+			tm.timeline.getBand(0).setCenterVisibleDate(d);
 		}
-		controller.ui.updateResultsCount(site_array.length);
-        // set initial rank
-        // XXX: this involves another iteration - might be better consolidated
-        controller.rankItems(tm);
-        GEvent.trigger(tm.map,'moveend');
+		tm.timeline.layout();
     };
 
+    this.checkResize = function(tm) {
+		var point = tm.map.getCenter();
+		tm.map.checkResize();
+		tm.map.setCenter(point);	
+		tm.timeline.layout();
+    };
+
+
+    this.getEventLimit = function() {
+        return this.ui.getEventLimit();
+    }
+	
     /**
      * Sort items by rank
      *
      * @param {TimeMap} tm      TimeMap to sort items for
      */
     this.rankItems = function(tm) {
-        var items = [], x;
-		var bounds = tm.map.getBounds();
-		var cultures = controller.ui.browse.cultures();
-		tm.eachItem(function(item){
+        var bounds = tm.map.getBounds();
+        var limit = controller.getEventLimit();
+		var cultures = Geodia.controller.ui.getCultures(Geodia.controller.ui.visibleTab.ele);
+		var items = [];
+		var x = 1;
+
+        tm.eachItem(function(item){
+            item.event._trackNum = null;
 			item.rank = 0;
-			item.show = true;
-			//if state is "shown" add no weight
-			if(item.state < 2){
-				//if state is auto calculate weight
-				if(item.state == 1){
-					//if its not on map give it more weight than it can have any other site visible on the map can have
-		    	    if (!bounds.containsLatLng(item.getInfoPoint())){
-			   			item.show = false;
-						item.rank += 12;
-					}
-					//add its zoom level 
-					if('zoom_level' in item.opts){
-						item.rank += parseInt(item.opts.zoom_level);
-					}
-					// if the site has a culture that has been selected give it less weight
-					if('cul_imp' in item.opts){
-						var found = false;
-						for(var i in cultures){
-							if(item.opts.cul_imp[cultures[i]]){
-								item.rank += parseInt(item.opts.cul_imp[cultures[i]]);
-								found = true;
-							}
-						}
-						if(!found){
-							for(var i in item.opts.cul_imp){
-								if(item.opts.cul_imp[i]){
-									item.rank += parseInt(item.opts.cul_imp[i]);
-								}
-								else{
-									item.rank += 4;	
-								}
-							}
-							item.rank += 4;
-						}
-					}
-					else if('culture' in item.opts){
-						//this is specifically for events
-						if($.inArray(item.opts.culture.toLowerCase(),cultures) == -1){
-							item.rank += 1;
-						}
-					}
-					else{
-						item.rank += 8;
-					}
-					//makes sure anything that is marked shown is lower than all other states
-					item.rank += 1;
-				}
-				else{
-					item.rank += 999;
-			   		item.show = false;
-				}
+			if(!bounds.containsLatLng(item.getInfoPoint())){
+				item.rank += 9;
 			}
+			if('zoom_level' in item.opts){
+				item.rank += parseInt(item.opts.zoom_level);
+			} else{
+				item.rank += 4
+			}
+			if('cultural_importance' in item.opts){
+				var cp_found = false;
+				//note: if a site has two culturally important assignments the cultures array then only the first one will go toward the ranking
+				for(var i in item.opts.cultural_importance){
+					if($.inArray(item.opts.cultural_importance[i].culture, cultures) !== -1 && !cp_found){
+						item.rank += parseInt(item.opts.cultural_importance[i].factor);
+						cp_found = true;
+					}
+				}
+				if(!cp_found){
+					item.rank += 4;
+				}
+			} else{
+				item.rank += 4;
+			}
+
+			if('visible_override' in item){
+				if(item.visible_override){
+					item.rank = 0;
+				} else{
+					item.rank = Infinity;
+				}
+			}	
+
 			items.push(item);
 		});
-        // sort by rank
+
         items.sort(function(a, b) {
             return a.rank - b.rank;
         });
-        for (x=0; x<items.length; x++) {
-            items[x].rank = x;
+        for (var i in items) {
+			if(items[i].event.isInstant()){
+				if('visible_override' in items[i] && items[i].visible_override === false){
+					items[i].rank = -1;
+				} 
+			} else if(i > limit || items[i].rank === Infinity){
+				items[i].rank = -1;
+			}
         }
-		//update sitelist to indicate any new changes in rank
-		controller.ui.results.update();
-    };
-
-	this.toggleState = function(item,state){
-		if(state == 'auto'){
-			item.state = 1;
-		}
-		else if(state == 'show'){
-			item.state = 2;
-		}
-		else{
-			item.state = 0;
-		}
 	};
 
-
-    /**
-     * Reset the timemap when loading new data
-     */
-    this.resetTimeMap = function() { 
-        var tm = this.tm;
-        // initialize data, adding periods
-        this.initData(tm); 
-		var ImageClicked = this.ui.ImageClicked;
-
-		if(ImageClicked != null){
-			var count = 0;
-        	tm.eachItem(function(item) {
-				if(count == 0){
-					item.getImages(function(site,new_site){
-				        // scroll appropriately
-						Geodia.controller.ui.siteDetails.loadImageViewer(site,new Array(),new_site);
-					});
-					count +=1;
-				}
-			});
-		}
-		else{
-	        // scroll appropriately
-        	var d = tm.eventSource.getEarliestDate();
-    	    tm.timeline.getBand(0).setCenterVisibleDate(d);
-	        tm.timeline.layout();
-		}
-    };
-    
-    /**
-     * Clear dataset(s)
-     */
-    this.clear = function() {
-        this.tm.datasets.sites.clear();
-		this.ui.clearAll();
-    };
-    /**
-     * Refresh the timeline
-     */
-    this.checkResize = function() {
-        if (this.tm) {
-            this.tm.map.checkResize();
-            this.tm.timeline.layout();
-        }
-    };
-    
-    /**
-     * Get the practical limit of items on the timeline
-     */
-    this.getEventLimit = function() {
-        return this.ui.getEventLimit();
-    };
 };
 
-/*----------------------------------------------------------------------------
- * TimeMap extensions
- *---------------------------------------------------------------------------*/
-
-/**
- * Set the placemark to a specific theme
- *
- * @param {TimeMapDatasetTheme} theme   Theme to set placemark to
- */
-TimeMapItem.prototype.setPlacemarkTheme = function(theme) {
-    var pm = this.placemark;
-    if (pm) {
-        // XXX: might need to support polys eventually
-        switch (this.getType()) {
-            case 'marker':
-                pm.setImage(theme.iconImage);
-        }
-    }
-};
- 
-/*----------------------------------------------------------------------------
- * Periodization
- *---------------------------------------------------------------------------*/
-
-/**
- * Get the current period, by date, for a particular item
- *
- * @param {Date} d      Current date
- * @return              Period covering that date
- */
-TimeMapItem.prototype.getPeriod = function(d) {
-    if (!this.periods) return null;
-    // get center date if none given
-    if (!d) d = this.dataset.timemap.timeline.getBand(0).getCenterVisibleDate();
-    // look for the next date after the center
-    var iterator = this.periods.getIterator(d, new Date());
-    if (!iterator.hasNext()) {
-        // event only exists in the past
-        var iterator = this.periods.getReverseIterator(this.event.getStart(), d);
-    }
-    return iterator.next();
-};
-
-/**
- * Show description based on period
- */
 TimeMapItem.openPeriodWindow = function() {
-    var p;
+	var p;
 	var site_name = this.opts.title;
     // user clicked on specific period in event
     if (this.currPeriod) {
@@ -466,29 +314,49 @@ TimeMapItem.openPeriodWindow = function() {
 	if(!p){
 		//its an event
     	var html = '<p>' + site_name + '</p>';
+		if(Geodia.controller.ui.admin){
+			html += '<a class="admin_link" target="_blank" href="'+Geodia.controller.loader.EVENT_ADMIN+this.opts.serial_number+'">Edit</a>';
+		}
 		html += '<div class="infodescription"><p><span>Culture: </span>'+this.opts.culture+'</p>';
 		html += '<p><span>Date: </span>'+this.opts.date+'</p></div>';
 
-    	var topband = this.dataset.timemap.timeline.getBand(this.getStart());
+
+		Geodia.controller.tm.timeline.getBand(0).setCenterVisibleDate(this.getStartTime());
+		Geodia.controller.tm.map.setCenter(this.getInfoPoint());
+		Geodia.controller.tm.map.setZoom(5);
+
 	    // open window
     	if (this.getType() == "marker") {
         	this.placemark.openInfoWindowHtml(html);
 	    } else {
     	    this.map.openInfoWindowHtml(this.getInfoPoint(), html);
 	    }
+
 	    // custom functions will need to set this as well
-	    this.selected = true;
+	    this.selected = false;
+		Geodia.controller.ui.sidebar.showSubTab(Geodia.controller.ui.event,Geodia.controller.ui.event.details);
+		Geodia.controller.ui.event.generateDetails(this);
 	}
 	else{
 		//its a site
     	var html = '<div class="infotitle">' + site_name + '</div>';
-	    html += '<div class="infodescription"><span>Period:</span> '+p.term+' <br/><span>Start: </span>'+p.start+'<br/><span>End: </span> '+p.end+'<br/><span>Culture:</span> '+p.culture+'</div>';
+		if(Geodia.controller.ui.admin){
+			html += '<a class="admin_link" target="_blank" href="'+Geodia.controller.loader.SITE_ADMIN+'site/'+this.opts.serial_number+'">Edit</a>';
+		}
+		if(this.opts.pleiades_uri){
+	    	html += '<div class="infodescription"><span>Period:</span> '+p.term+' <br/><span>Start: </span>'+p.start+'<br/><span>End: </span> '+p.end+'<br/><span>Culture:</span> '+p.culture+'<br/><a href="'+this.opts.pleiades_uri+'">Pleiades Link</a></div>';
+		} else{
+	    	html += '<div class="infodescription"><span>Period:</span> '+p.term+' <br/><span>Start: </span>'+p.start+'<br/><span>End: </span> '+p.end+'<br/><span>Culture:</span> '+p.culture+'</div>';
+
+		}
 	    // scroll timeline if necessary
+
     	var topband = this.dataset.timemap.timeline.getBand(0);
 	    if (p.getStart().getTime() > topband.getMaxVisibleDate().getTime() || 
     	    p.getEnd().getTime() < topband.getMinVisibleDate().getTime()) {
         	topband.setCenterVisibleDate(p.getStart());
 	    }
+
 	    // open window
     	if (this.getType() == "marker") {
         	this.placemark.openInfoWindowHtml(html);
@@ -496,26 +364,69 @@ TimeMapItem.openPeriodWindow = function() {
     	    this.map.openInfoWindowHtml(this.getInfoPoint(), html);
 	    }
 	    // custom functions will need to set this as well
-	    this.selected = true;
-		this.getImages(function(site,new_site){
-			Geodia.controller.ui.siteDetails.loadImageViewer(site,p,new_site);
-		})
+	    this.selected = false;
+		
+		if(!Geodia.controller.ui.site.site_period){
+			Geodia.controller.ui.site.site_period = p.serial;
+		}
+		Geodia.controller.ui.sidebar.showSubTab(Geodia.controller.ui.site,Geodia.controller.ui.site.details);
+		Geodia.controller.ui.site.generateDetails(this);
+	}
+}
+
+TimeMapItem.prototype.getPeriodImages = function(callback) {
+	var period_sernums = [];
+	var item = this;
+	for(var i in this.period_array){
+		if(!('images' in this.period_array[i])){
+			period_sernums.push(this.period_array[i].serial);
+		}
+	}
+	if(period_sernums.length){
+		var cache = Geodia.getCache(period_sernums.toString());
+		if(!cache){
+			var url = Geodia.controller.loader.SERVICE+'period_images.json?sernums='+period_sernums.toString()+'&auth=http&callback=?';
+			$.getJSON(url,function(json){
+				Geodia.addCache(period_sernums.toString(),json);
+				for(var i in json){
+					item.period_array[i].images = json[i];	
+				}
+				callback();
+			});
+		} else{
+			for(var i in cache[1]){
+				item.period_array[i].images = cache[1][i];	
+			}
+			callback();
+		}
+	} else{
+		callback();
 	}
 };
-TimeMapItem.prototype.getImages = function(callback){
-	//check to see if already loaded
-	if($(this).data('images') != undefined) return callback(this,false);
-	var site = this;
-	var cache = true;
-	var url = 'http://www.laits.utexas.edu/geodia/modules/geodia';
-	Geodia.controller.ui.siteDetails.displayLoading(site);
-	//response isnt cached on server side yet, but still seems fast
-	$.getJSON(url+'/dataset/images.json?sernum='+this.opts.serial_number+'&auth=http&cache='+cache+'&callback=?',function(resp){
-		$(site).data('images',resp);
-		callback(site,true);
-	});
+
+TimeMapItem.prototype.setPlacemarkTheme = function(theme) {
+    var pm = this.placemark;
+    if (pm) {
+        // XXX: might need to support polys eventually
+        switch (this.getType()) {
+            case 'marker':
+                pm.setImage(theme.iconImage);
+        }
+    }
 };
 
+TimeMapItem.prototype.getPeriod = function(d) {
+    if (!this.periods) return null;
+    // get center date if none given
+    if (!d) d = this.dataset.timemap.timeline.getBand(0).getCenterVisibleDate();
+    // look for the next date after the center
+    var iterator = this.periods.getIterator(d, new Date());
+    if (!iterator.hasNext()) {
+        // event only exists in the past
+        var iterator = this.periods.getReverseIterator(this.event.getStart(), d);
+    }
+    return iterator.next();
+};
 TimeMapItem.prototype.loadPeriods = function(){    
     // check if already loaded
     if (this.periods) return;
@@ -525,6 +436,8 @@ TimeMapItem.prototype.loadPeriods = function(){
     
     // set up event index
     this.periods = new SimileAjax.EventIndex(null);
+	//SR - need an array of periods for easy access by templates
+	this.period_array = [];
     
     // loop through periods
     for (var x=0; x<periods.length; x++) {
@@ -546,41 +459,31 @@ TimeMapItem.prototype.loadPeriods = function(){
             p.stripe = style.stripe;
         })(x);
         this.periods.add(periods[x]);
+		//SR - push to period array
+		this.period_array.push(periods[x]);
     }
 };
 TimeMapItem.prototype.addEventTheme = function(){
 	this.changeTheme(Geodia.getEventStyle(this));
 }
 
-Geodia.getEventStyle = function(item){
-	var culture = item.opts.culture;
-	var theme = null;
-	if (culture.indexOf('/') > 0) {
-        var cultures = culture.split('/');
-        if (cultures[0] in Geodia.cultureMap) {
-			theme = Geodia.themes[Geodia.cultureMap[cultures[0]]];
-        }
-        else if(cultures[1] in Geodia.cultureMap){
-			theme = Geodia.themes[Geodia.cultureMap[cultures[1]]];
-        }
-    }
-	else if(culture){
-		theme = Geodia.themes[Geodia.cultureMap[culture]];
+Geodia.cache = [];
+Geodia.getCache = function(uid){
+	var json = false;
+	for(var i in Geodia.cache){
+		if(Geodia.cache[i][0] === uid){
+			json = Geodia.cache[i];
+			break;
+		}
 	}
-	if(theme == null){
-		theme = Geodia.themes[Geodia.cultureMap['default']];
-	}
-	theme.eventColor = theme.eventColor.replace('timemap/','');
-	theme.eventIcon = theme.eventIcon.replace('timemap/','');
-	return theme;
-}
+	return json;
+};
+Geodia.addCache = function(uid,json){
+	Geodia.cache.push([uid,json]);	
+};
 
 
 
-/**
- * Get theme and stripe from period
- * @return {Object}     Style w/theme + stripe
- */
 Geodia.getPeriodStyle = function(period) {
     var culture = period.culture || 'default', stripeCulture, theme, stripe=null;
     // check for hybrid cultures
@@ -610,14 +513,35 @@ Geodia.getPeriodStyle = function(period) {
     return { theme:theme, stripe:stripe };
 };
 
-
+Geodia.getEventStyle = function(item){
+	var culture = item.opts.culture;
+	var theme = null;
+	if (culture.indexOf('/') > 0) {
+        var cultures = culture.split('/');
+        if (cultures[0] in Geodia.cultureMap) {
+			theme = Geodia.themes[Geodia.cultureMap[cultures[0]]];
+        }
+        else if(cultures[1] in Geodia.cultureMap){
+			theme = Geodia.themes[Geodia.cultureMap[cultures[1]]];
+        }
+    }
+	else if(culture){
+		theme = Geodia.themes[Geodia.cultureMap[culture]];
+	}
+	if(theme == null){
+		theme = Geodia.themes[Geodia.cultureMap['default']];
+	}
+	theme.eventColor = theme.eventColor.replace('timemap/','');
+	theme.eventIcon = theme.eventIcon.replace('timemap/','');
+	return theme;
+}
 /*
  * New event painter for periods
  */
 Geodia.PeriodEventPainter = function(params) {
 
     var painter = new Timeline.OriginalEventPainter(params);
-    
+
     // fix for long track problem :(
     painter.paint = function() {
         // Paints the events for a given section of the band--what is
@@ -631,6 +555,7 @@ Geodia.PeriodEventPainter = function(params) {
         this._fireEventPaintListeners('paintStarting', null, null);
         this._prepareForPainting();
         
+
         var eventTheme = this._params.theme.event;
         // NR: changed to fix track heights
         var trackHeight = eventTheme.track.height;
@@ -656,7 +581,11 @@ Geodia.PeriodEventPainter = function(params) {
             function(evt) { return -1; };
         
         // NR: this is the only changed line - Ugh
-        var iterator = eventSource.getAllEventIterator();
+//        var iterator = eventSource.getAllEventIterator();
+    	var minDate = this._band.getMinDate();
+		var maxDate = this._band.getMaxDate();
+		var iterator = eventSource.getEventReverseIterator(minDate, maxDate)
+
         while (iterator.hasNext()) {
             var evt = iterator.next();
             if (filterMatcher(evt)) {
@@ -671,8 +600,8 @@ Geodia.PeriodEventPainter = function(params) {
         this._band.updateEventTrackInfo(this._tracks.length, metrics.trackIncrement); 
         this._fireEventPaintListeners('paintEnded', null, null);
     };
-    
-	
+
+
     // Continue fix for long event tracks
     painter._findFreeTrack = function(event, rightEdge) {
         var trackAttribute = event.getTrackNum();
@@ -695,13 +624,9 @@ Geodia.PeriodEventPainter = function(params) {
         }
         return i;
     };
-	
     
     // overwrite duration painting
     painter.paintPreciseDurationEvent = function(evt, metrics, theme, highlightIndex) {
-		//doc doesnt seem to be doing anything.....
-        var doc = this._timeline.getDocument();
-        
         // get the track for the whole event
         var startDate = evt.getStart(),
             endDate = evt.getEnd(),
@@ -788,54 +713,11 @@ Geodia.PeriodEventPainter = function(params) {
         }
 
     };
-painter.paintPreciseInstantEvent = function(evt, metrics, theme, highlightIndex) {
-    var doc = this._timeline.getDocument();
 
-    var text = evt.getText();
-
-    var startDate = evt.getStart();
-    var startPixel = Math.round(this._band.dateToPixelOffset(startDate));
-    var iconRightEdge = Math.round(startPixel + metrics.iconWidth / 2);
-    var iconLeftEdge = Math.round(startPixel - metrics.iconWidth / 2);
-
-    var labelDivClassName = this._getLabelDivClassName(evt);
-    var labelSize = this._frc.computeSize(text, labelDivClassName);
-    var labelLeft = iconRightEdge + theme.event.label.offsetFromLine;
-    var labelRight = labelLeft + labelSize.width;
-
-    var rightEdge = labelRight;
-    var track = this._findFreeTrack(evt, rightEdge);
-
-    var labelTop = Math.round(
-        metrics.trackOffset + track * metrics.trackIncrement +
-        metrics.trackHeight / 2 - labelSize.height / 2);
-
-    var iconElmtData = this._paintEventIcon(evt, track, iconLeftEdge, metrics, theme, 0);
-    var labelElmtData = this._paintEventLabel(evt, text, labelLeft, labelTop, labelSize.width,
-        labelSize.height, theme, labelDivClassName, highlightIndex);
-    var els = [iconElmtData.elmt, labelElmtData.elmt];
-
-    var self = this;
-    var clickHandler = function(elmt, domEvt, target) {
-        return self._onClickInstantEvent(iconElmtData.elmt, domEvt, evt);
-    };
-    SimileAjax.DOM.registerEvent(iconElmtData.elmt, "mousedown", clickHandler);
-    SimileAjax.DOM.registerEvent(labelElmtData.elmt, "mousedown", clickHandler);
-
-    var hDiv = this._createHighlightDiv(highlightIndex, iconElmtData, theme, evt);
-    if (hDiv != null) {els.push(hDiv);}
-    this._fireEventPaintListeners('paintedEvent', evt, els);
-
-
-    this._eventIdToElmt[evt.getID()] = iconElmtData.elmt;
-    this._tracks[track] = iconLeftEdge;
-};
-
-
-    
     // return new painter
     return painter;
 }
+
 
 /*----------------------------------------------------------------------------
  * Static settings
@@ -922,7 +804,7 @@ Geodia.bands = [];
             intervalPixels: 70,
             theme:          themes[0],
             zones:          zones[0],
-            eventPainter:   Geodia.PeriodEventPainter
+			eventPainter:   Geodia.PeriodEventPainter
         }),
         Timeline.createHotZoneBandInfo({
             eventSource:    null,
@@ -931,8 +813,7 @@ Geodia.bands = [];
             intervalPixels: 100,
             showEventText:  false,
             theme:          themes[1],
-            zones:          zones[1],
-            eventPainter:   Geodia.PeriodEventPainter
+            zones:          zones[1]
         })
     ];
 })();
@@ -955,3 +836,122 @@ Geodia.cultureMap = {
     "Persian": 'blue',
     "Etruscan": 'brown'
 };
+
+TimeMap.state.params.item_type = new TimeMap.params.Param('item_type', {
+	get: function(tm){
+		return Geodia.controller.ui.visibleTab.item_type;
+	},
+	set: function(tm, value){
+		if(value !== '' && value in Geodia.controller.ui){
+			var tab = Geodia.controller.ui[value];
+			Geodia.controller.ui.sidebar.showTab(tab);
+		}
+	},
+	fromStr: function(s){
+		return s;
+	},
+	toStr: function(s){
+		return s;
+	}
+});
+TimeMap.state.params.cultures = new TimeMap.params.Param('cultures', {
+	get: function(tm){
+		var ele = Geodia.controller.ui.visibleTab.ele;
+		return Geodia.controller.ui.getCultures(ele);
+	},
+	set: function(tm, value){
+		var ele = Geodia.controller.ui.visibleTab.ele;
+		Geodia.controller.ui.setCultures(ele,value);
+	},
+	fromStr: function(s){
+		return s.split(',');
+	},
+	toStr: function(s){
+		return	s.toString();
+	}
+});
+
+
+TimeMap.state.params.regions = new TimeMap.params.Param('regions', {
+	get: function(tm){
+		var ele = Geodia.controller.ui.visibleTab.ele;
+		return Geodia.controller.ui.getRegions(ele);
+	},
+	set: function(tm, value){
+		var ele = Geodia.controller.ui.visibleTab.ele;
+		Geodia.controller.ui.setRegions(ele,value);
+	},
+	fromStr: function(s){
+		return s.split(',');
+	},
+	toStr: function(s){
+		return	s.toString();
+	}
+});
+TimeMap.state.params.terms = new TimeMap.params.Param('terms', {
+	get: function(tm){
+		var tab = Geodia.controller.ui.visibleTab;
+		return Geodia.controller.ui.getTerms(tab);
+	},
+	set: function(tm, value){
+		var tab = Geodia.controller.ui.visibleTab;
+		Geodia.controller.ui.setTerms(tab,value);
+	},
+	fromStr: function(s){
+		if(s === ''){
+			return [];
+		} else{
+			return s.split(',');
+		}
+	},
+	toStr: function(s){
+		return	s.toString();
+	}
+});
+TimeMap.state.params.site_period = new TimeMap.params.Param('site_period', {
+	get: function(tm){
+		return Geodia.controller.ui.site.site_period;
+	},
+	set: function(tm, value){
+		Geodia.controller.ui.site.site_period = value;
+	},
+	fromStr: function(s){
+		return s.toString();
+	},
+	toStr: function(s){
+		return s.toString();
+	}
+});
+TimeMap.state.params.removed = new TimeMap.params.Param('removed', {
+	get: function(tm){
+		return Geodia.controller.ui.visibleTab.removed;
+	},
+	set: function(tm, value){
+		Geodia.controller.ui.visibleTab.removed = value;
+	},
+	fromStr: function(s){
+		if(s === ''){
+			return [];
+		} else{
+			return s.split(',');
+		}
+	},
+	toStr: function(s){
+		return s.toString();
+	}
+});
+
+TimeMap.state.params.pleiades_uri = new TimeMap.params.Param('pleiades_uri', {
+	get: function(tm){
+		return tm.opts.pleiades_uri;
+	},
+	set: function(tm, value){
+		tm.opts.pleiades_uri = value;
+	},
+	fromStr: function(s){
+		return s;
+	},
+	toStr: function(s){
+		return s;
+	}
+});
