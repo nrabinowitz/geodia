@@ -123,7 +123,6 @@ table#site_table tr.totals td{
 	padding:10px;
 	-moz-border-radius:5px;
 	-webkit-border-radius:5px;
-
 }
 
 #credits-content a{
@@ -149,6 +148,20 @@ table#site_table tr.totals td{
 	padding-bottom:10px;
 	font-size:1.1em;
 	width:60%;
+}
+#credits-content p.intro {
+	font-size:23px;
+}
+
+#teaser {
+	float: right;
+	width: 310px;
+	margin: 0px 15px;
+	background: #eee;
+	padding: 5px;
+	-moz-border-radius:5px;
+	-webkit-border-radius:5px;
+	font-size:23px;
 }
 
 
