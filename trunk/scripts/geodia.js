@@ -241,7 +241,10 @@ Geodia.controller = new function() {
     this.rankItems = function(tm) {
         var bounds = tm.map.getBounds();
         var limit = controller.getEventLimit();
-		var cultures = Geodia.controller.ui.getCultures(Geodia.controller.ui.visibleTab.ele);
+        var cultures = [];
+        for(c in Geodia.controller.ui.getCultures(Geodia.controller.ui.visibleTab.ele)){
+            cultures.push(c.split('/'));
+        }
 		var items = [];
 		var x = 1;
 
