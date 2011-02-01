@@ -242,9 +242,13 @@ Geodia.controller = new function() {
         var bounds = tm.map.getBounds();
         var limit = controller.getEventLimit();
         var cultures = [];
-        for(c in Geodia.controller.ui.getCultures(Geodia.controller.ui.visibleTab.ele)){
-            cultures.push(c.split('/'));
-        }
+		var temp_c = Geodia.controller.ui.getCultures(Geodia.controller.ui.visibleTab.ele);
+		for(c in temp_c){
+			split = temp_c[c].split('/');
+			for(cul in split){
+				cultures.push(split[cul]);
+			}
+		}
 		var items = [];
 		var x = 1;
 
